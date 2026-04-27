@@ -12,6 +12,8 @@ public:
     virtual bool shouldRun() = 0;
 
     virtual void setFramebufferCallback(std::function<void(int, int)> cb) = 0;
+    virtual void setKeyInputCallback(std::function<void(int, int, int, int)> cb) = 0;
+    virtual void setTextInputCallback(std::function<void(unsigned int)> cb) = 0;
     virtual void getFramebufferSize(int &, int &) = 0;
 };
 
@@ -23,6 +25,8 @@ private:
     MintyState* state;
 
     std::function<void(int, int)> framebuffer_cb;
+    std::function<void(int, int, int, int)> keyinput_cb;
+    std::function<void(int)> textinput_cb;
 public:
     OpenGLWindow(MintyState*);
     ~OpenGLWindow();
@@ -31,5 +35,7 @@ public:
     void pollEvents() override;
     void swapBuffers() override;
     void setFramebufferCallback(std::function<void (int, int)> cb) override;
+    void setKeyInputCallback(std::function<void(int, int, int, int)> cb) override;
+    void setTextInputCallback(std::function<void(unsigned int)> cb) override;
     void getFramebufferSize(int &, int &) override;
 };

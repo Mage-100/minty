@@ -1,6 +1,8 @@
 #include "conpty.hpp"
-#include <process.h>  // _beginthread
+#include "threadsafequeue.hpp"
+#include <process.h>
 #include <stdexcept>
+#include <iostream>
 
 static void __cdecl PipeListener(LPVOID param) {
     ConPTY* self = static_cast<ConPTY*>(param);
@@ -11,20 +13,22 @@ static void __cdecl PipeListener(LPVOID param) {
     DWORD bytesRead{}, bytesWritten{};
 
     while (ReadFile(hPipe, buf, sizeof(buf), &bytesRead, nullptr) && bytesRead > 0) {
-        WriteFile(hOutput, buf, bytesRead, &bytesWritten, nullptr);
-        self->vtparserWrite(buf, bytesRead);
+        // WriteFile(hOutput, buf, bytesRead, &bytesWritten, nullptr);
+        // self->vtparserWrite(buf, bytesRead);
+        std::vector<char> vec_buf(bytesRead);
+        std::memcpy(vec_buf.data(), buf, bytesRead);
+        self->queue->push(std::move(vec_buf));
     }
 }
 
-ConPTY::ConPTY() {
-    // Enable VT processing on the host console (needed until we have our own renderer)
+ConPTY::ConPTY(ThreadSafeQueue<std::vector<char>> *q) : queue(q) {
+    // Enable VT processing on the host console
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD consoleMode{};
     if (GetConsoleMode(hConsole, &consoleMode)) {
         SetConsoleMode(hConsole, consoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     }
 
-    // Create two pipes: one for PTY->us (output), one for us->PTY (input)
     HANDLE hPipePTYOut, hPipePTYIn;
     if (!CreatePipe(&m_hPipeIn, &hPipePTYOut, nullptr, 0) ||
         !CreatePipe(&hPipePTYIn, &m_hPipeOut, nullptr, 0)) {
@@ -34,7 +38,6 @@ ConPTY::ConPTY() {
     COORD consoleSize{ 80, 25 };
     HRESULT hr = CreatePseudoConsole(consoleSize, hPipePTYIn, hPipePTYOut, 0, &m_hPC);
 
-    // PTY-side pipe ends are handed off to the pseudo console — close our copies
     CloseHandle(hPipePTYIn);
     CloseHandle(hPipePTYOut);
 
@@ -63,7 +66,7 @@ ConPTY::ConPTY() {
     }
 
     // Spawn the shell
-    wchar_t shellCmd[] = L"cmd.exe";
+    wchar_t shellCmd[] = L"pwsh.exe -NoExit -Command \"Set-PSReadLineOption -PredictionSource None\"";
     if (!CreateProcessW(
             nullptr, shellCmd,
             nullptr, nullptr,

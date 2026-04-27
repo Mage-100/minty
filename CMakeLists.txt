@@ -33,15 +33,16 @@ target_include_directories(minty PRIVATE
 )
 
 target_sources(minty PUBLIC
-    # "./src/renderer.cpp"
     "./src/font.cpp"
     "./src/mty_app.cpp"
     "./src/mty_renderer.cpp"
     "./src/mty_runtime.cpp"
     "./src/mty_state.cpp"
     "./src/mty_window.cpp"
-    # "./src/conpty.cpp"
-    # "./src/vtparser.cpp"
+    "./src/mty_cellgrid.cpp"
+    "./src/mty_prompt_renderer.cpp"
+    "./src/conpty.cpp"
+    "./src/vtparser.cpp"
 )
 
 target_precompile_headers(minty PRIVATE "./src/pch.h")

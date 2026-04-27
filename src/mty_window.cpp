@@ -32,6 +32,20 @@ OpenGLWindow::OpenGLWindow(MintyState* s) : state(s) {
         }
     });
 
+    glfwSetKeyCallback(window, [](GLFWwindow* w, int key, int scancode, int action, int mods) {
+        auto self = static_cast<OpenGLWindow*>(glfwGetWindowUserPointer(w));
+        if (self->keyinput_cb) {
+            self->keyinput_cb(key, scancode, action, mods);
+        }
+    });
+
+    glfwSetCharCallback(window, [](GLFWwindow* w, unsigned int codepoint) {
+        auto self = static_cast<OpenGLWindow*>(glfwGetWindowUserPointer(w));
+        if (self->textinput_cb) {
+            self->textinput_cb(codepoint);
+        }
+    });
+
     if (gladLoadGL(glfwGetProcAddress) == 0) {
         std::cerr << "Error: Failed to initialize OpenGL Context" << std::endl;
         glfwTerminate();
@@ -52,6 +66,14 @@ bool OpenGLWindow::shouldRun() {
 
 void OpenGLWindow::setFramebufferCallback(std::function<void(int, int)> cb) {
     framebuffer_cb = cb;
+}
+
+void OpenGLWindow::setKeyInputCallback(std::function<void(int, int, int, int)> cb) {
+    keyinput_cb = cb;
+}
+
+void OpenGLWindow::setTextInputCallback(std::function<void(unsigned int)> cb) {
+    textinput_cb = cb;
 }
 
 void OpenGLWindow::getFramebufferSize(int &w, int &h) {

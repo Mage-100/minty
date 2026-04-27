@@ -19,13 +19,14 @@ void OpenGLCellRenderer::generateGridTexture() {
 
 void OpenGLCellRenderer::updateGridTexture() {
     glad_glBindTexture(GL_TEXTURE_2D, gridTexID);
-    glad_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA_INTEGER, GL_UNSIGNED_INT, state->getCellBuffer().data());
+    // glad_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA_INTEGER, GL_UNSIGNED_INT, state->getCellBuffer().data());
+    glad_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA_INTEGER, GL_UNSIGNED_INT, state->getCellGrid()->data());
 }
 
 OpenGLCellRenderer::OpenGLCellRenderer(MintyState* s, std::unique_ptr<Font> &f)
     : state(s), font(f), cols(s->getCols()), rows(s->getRows()) {
 
-    cellProgram = std::make_unique<Shader>("./shaders/cell/cell.vert", "./shaders/cell/cell.frag");
+    cellProgram = std::make_unique<Shader>("D:/Azwad/home/programming/minty/shaders/cell/cell.vert", "D:/Azwad/home/programming/minty/shaders/cell/cell.frag");
 
     float quad_vertices[] = {
         // x,    y

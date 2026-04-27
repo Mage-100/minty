@@ -1,14 +1,9 @@
 #pragma once
 #include <cstdint>
-#include <memory>
-#include "font.hpp"
 
-typedef struct cell_t {
-    uint32_t glyph_id;
-    uint32_t fg_color;
-    uint32_t bg_color;
-    uint32_t flags;
-} cell_t;
+#include "font.hpp"
+#include "mty_cellgrid.hpp"
+
 
 class MintyState {
 private:
@@ -17,6 +12,7 @@ private:
     bool isCellBufferDirty = true;
 
     Font* font;
+    std::unique_ptr<CellGrid> cell_grid;
     std::vector<cell_t> cellBuffer;
 
 public:
@@ -25,6 +21,7 @@ public:
 
     void setFont(Font *);
     void initCellBuffer();
+    void initCellGrid();
     void resizeCellBuffer();
     void setCellBufferClean() { isCellBufferDirty = false; };
     void setCellBufferDirty() { isCellBufferDirty = true;  };
@@ -37,10 +34,11 @@ public:
     int getFramebufferHeight();
     float getAdvanceX(void);
     float getLineHeight(void);
-    int getCellWidth();
-    int getCellHeight();
+    float getCellWidth();
+    float getCellHeight();
 
     void setFramebufferSize(int, int);
 
     const std::vector<cell_t>& getCellBuffer() const { return cellBuffer; };
+    CellGrid* getCellGrid() { return cell_grid.get(); };
 };

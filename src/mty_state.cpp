@@ -1,7 +1,7 @@
 #include "font.hpp"
 #include "mty_state.hpp"
 
-MintyState::MintyState() {}
+MintyState::MintyState() {};
 
 void MintyState::setFont(Font *f) {
     font = f;
@@ -21,6 +21,10 @@ void MintyState::initCellBuffer() {
     }
 }
 
+void MintyState::initCellGrid() {
+    cell_grid = std::make_unique<CellGrid>(cols, rows);
+}
+
 void MintyState::resizeCellBuffer() {
     cellBuffer.resize(cols * rows);
     std::cout << "cellBuffer: " << cellBuffer.size() << std::endl;
@@ -35,11 +39,11 @@ void MintyState::setFramebufferSize(int w, int h) {
 }
 
 int MintyState::getWindowWidth() {
-    return 800;
+    return 1100;
 }
 
 int MintyState::getWindowHeight() {
-    return 600;
+    return 650;
 }
 
 int MintyState::getFramebufferWidth() {
@@ -67,8 +71,12 @@ float MintyState::getLineHeight(void) {
     return font->get_line_height();
 }
 
-int getCellWidth();
-int getCellHeight();
+float MintyState::getCellWidth() {
+    return font->get_cell_width();
+};
+float MintyState::getCellHeight() {
+    return font->get_cell_height();
+}
 
 
 MintyState::~MintyState() {

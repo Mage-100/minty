@@ -7,3 +7,6 @@ dependencies
 
 # Cmake
 __cmake_systeminformation
+
+# Visual Studio
+.vs/

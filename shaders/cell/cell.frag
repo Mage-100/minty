@@ -18,6 +18,7 @@ void main() {
     // }
 
     if (pass == 0) {
+        if (v_bg.a < 0.01) discard;
         FragColor = v_bg;
     } else {
         float alpha = texture(atlas_tex, v_uv).r;
