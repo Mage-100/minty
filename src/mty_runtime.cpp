@@ -109,6 +109,23 @@ void MintyRuntime::hookParserCallbacks() {
         promptRenderer->setPromptEnd(col, row);
     };
 
+    cb.onResetAllModes = [this](void) {
+        auto cell_grid = state->getCellGrid();
+        cell_grid->resetAllModes();
+    };
+
+    cb.onSetForegroundColor = [this](int color) {
+        auto cell_grid = state->getCellGrid();
+        cell_grid->setForegroundColor(color);
+        std::cout << "FG Color: " << color << std::endl;
+    };
+
+    cb.onSetBackgroundColor = [this](int color) {
+        auto cell_grid = state->getCellGrid();
+        cell_grid->setBackgroundColor(color);
+        std::cout << "BG Color: " << color << std::endl;
+    };
+
     vtparser->setCallbacks(std::move(cb));
 }
 
