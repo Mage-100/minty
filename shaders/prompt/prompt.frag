@@ -9,7 +9,8 @@ void main() {
     vec3 colorA = vec3(0.635, 0.894, 0.721);
     // vec3 colorB = vec3(0.118, 0.565, 1.000);
     vec3 colorB = vec3(0.694, 0.737, 0.333);
-    vec3 colorC = vec3(0.0, 0.298, 0.329);
+    // vec3 colorC = vec3(0.0, 0.298, 0.329);
+    vec3 colorC = vec3(0.118, 0.565, 1.000);
 
     float cell_uv     = 1.0 / float(u_num_cells);
     float angle_start = 1.0 - cell_uv;
