@@ -43,9 +43,6 @@ void PromptRenderer::calculateCellGridSize() {
     cell_grid_height = state->getRows() * cell_height;
     cell_grid_top_x = (fb_width - cell_grid_width) / 2.0;
     cell_grid_top_y = (fb_height - cell_grid_height) / 2.0;
-
-    std::cout << "Grid Top Y: " << (fb_height) << " " <<  (cell_grid_height) << std::endl;
-    std::cout << "Grid Top X: " << cell_grid_top_x << std::endl;
 }
 
 void PromptRenderer::setFramebufferSize(int w, int h) {

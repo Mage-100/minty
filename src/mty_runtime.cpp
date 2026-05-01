@@ -79,8 +79,6 @@ void MintyRuntime::hookParserCallbacks() {
         auto cell_grid = state->getCellGrid();
         cell_grid->printChar(col, row, ch);
         state->setCellBufferDirty();
-        std::cout << std::endl;
-        std::cout << "Col: " << col << " ,Row: " << row << std::endl;
     };
 
     cb.onScrollUp = [this](int lines) {

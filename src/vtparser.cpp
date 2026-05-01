@@ -23,9 +23,6 @@ void VTParser::parse(char *buf, uint32_t bytesread) {
 }
 
 void VTParser::processByte(uint8_t byte) {
-    if (byte>=32 && byte <=126) {
-        std::cout << static_cast<char>(byte);
-    }
     switch (state) {
         case State::Ground:
             if (byte == 0x1B) { state = State::Escape; }
