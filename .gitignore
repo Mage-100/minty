@@ -7,6 +7,10 @@ dependencies
 
 # Cmake
 __cmake_systeminformation
+Testing/
 
 # Visual Studio
 .vs/
+
+# Clangd
+.clangd

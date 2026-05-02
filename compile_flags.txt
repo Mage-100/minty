@@ -1,9 +1,0 @@
--xc++
--std=c++17
--DWIN32
--I./include
--I./dependencies/glfw/include
--I./dependencies/glad/include
--I./dependencies/glm
--I./dependencies/harfbuzz/install_harfbuzz/include
--I./dependencies/harfbuzz/install_harfbuzz/include/freetype2
