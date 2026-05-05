@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "freetype",
+    {
+      "name": "glad",
+      "features": [
+        "gl-api-46",
+        "loader"
+      ]
+    },
+    "glfw3",
+    "gtest",
+    {
+      "name": "harfbuzz",
+      "features": [
+        "freetype"
+      ]
+    },
+    "glm"
+  ]
+}

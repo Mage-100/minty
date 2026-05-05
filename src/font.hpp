@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <array>
 
-#include <glad/gl.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <shader.hpp>
 #include <glm/common.hpp>

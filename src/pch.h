@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 
-#include <glad/gl.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #define NOMINMAX

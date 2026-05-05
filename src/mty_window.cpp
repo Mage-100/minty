@@ -46,7 +46,7 @@ OpenGLWindow::OpenGLWindow(MintyState* s) : state(s) {
         }
     });
 
-    if (gladLoadGL(glfwGetProcAddress) == 0) {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Error: Failed to initialize OpenGL Context" << std::endl;
         glfwTerminate();
     }
