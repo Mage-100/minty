@@ -69,4 +69,4 @@ Minty is in early development. The codebase is actively evolving and no stable A
 
 ## License
 
-To be decided.
+MIT - see [LICENSE](LICENSE) for details.
