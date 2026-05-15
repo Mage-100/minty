@@ -21,9 +21,9 @@ Minty is a terminal emulator built from scratch with a focus on GPU-accelerated 
 
 ## Platform
 
-| Platform | Status |
-|----------|--------|
-| Windows  | ✅ Builds and runs |
+| Platform | Status              |
+| -------- | ------------------- |
+| Windows  | ✅ Builds and runs   |
 | Linux    | ❌ Not supported yet |
 | macOS    | ❌ Not supported yet |
 
@@ -40,9 +40,11 @@ Minty is a terminal emulator built from scratch with a focus on GPU-accelerated 
 
 > **Note:** The demo above is from the `core/adding-color-support-cellbuffer` branch.
 > To build that version, check it out first:
+> 
 > ```powershell
 > git checkout core/adding-color-support-cellbuffer
 > ```
+> 
 > Otherwise, continue below to build from `main`.
 
 **1. Install dependencies via vcpkg**
@@ -61,6 +63,33 @@ cmake --preset default-windows
 
 ```bash
 cmake --build --preset default-windows
+```
+
+**4. Run**
+
+```base
+.\build\default\src\minty.exe
+```
+
+## Configuration
+
+### Animated Prompt (Windows)
+
+For the animated prompt to work, add the following to your PowerShell profile (`$PROFILE`):
+
+```powershell
+function prompt {
+    $oscStart = "`e]133;A`a"
+    $oscEnd = "`e]133;B`a"
+    $path = $(Get-Location)
+    return "${oscStart}PS $path> $oscEnd"
+}
+```
+
+To open your PowerShell profile for editing:
+
+```powershell
+notepad $PROFILE
 ```
 
 ## Status
