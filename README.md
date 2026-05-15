@@ -2,7 +2,7 @@
 
 # 🌿 Minty
 
-**A GPU-accelerated terminal emulator for Windows**
+**A GPU-accelerated terminal emulator**
 
 ![Minty Demo](assets/demo.gif)
 
