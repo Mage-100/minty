@@ -1,22 +1,16 @@
 #pragma once
-#include "pch.h"
-
-#include <string>
-#include <functional>
-#include <cstdint>
-
+#include "interfaces/IPtyBackend.hpp"
 #include "threadsafequeue.hpp"
 
-class ConPTY {
+class ConPtyBackend : public IPtyBackend {
 public:
-    ConPTY(ThreadSafeQueue<std::vector<char>> *);
-    ~ConPTY();
+    ConPtyBackend(ThreadSafeQueue<std::vector<char>> *);
+    ~ConPtyBackend();
 
-    bool Write(const std::string &input);
-    bool Resize(SHORT cols, SHORT rows);
+    void write(const std::string &input) override;
+    void resize(int cols, int rows) override;
     HANDLE  m_hPipeIn   = INVALID_HANDLE_VALUE;
 
-    std::function<void(char *, uint32_t)> vtparserWrite;
     ThreadSafeQueue<std::vector<char>> *queue;
 private:
     HPCON   m_hPC       = INVALID_HANDLE_VALUE;

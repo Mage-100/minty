@@ -12,8 +12,9 @@ target_sources(minty PUBLIC
     "mty_window.cpp"
     "mty_cellgrid.cpp"
     "mty_prompt_renderer.cpp"
-    "conpty.cpp"
+    "mty_pty.cpp"
     "vtparser.cpp"
+    "ConPtyBackend.cpp"
 )
 
 target_precompile_headers(minty PRIVATE "pch.h")

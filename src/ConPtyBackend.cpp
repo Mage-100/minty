@@ -1,11 +1,11 @@
-#include "conpty.hpp"
+#include "ConPtyBackend.hpp"
+
 #include "threadsafequeue.hpp"
 #include <process.h>
 #include <stdexcept>
-#include <iostream>
 
 static void __cdecl PipeListener(LPVOID param) {
-    ConPTY* self = static_cast<ConPTY*>(param);
+    ConPtyBackend* self = static_cast<ConPtyBackend*>(param);
     HANDLE hPipe   = self->m_hPipeIn;
     HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -13,15 +13,13 @@ static void __cdecl PipeListener(LPVOID param) {
     DWORD bytesRead{}, bytesWritten{};
 
     while (ReadFile(hPipe, buf, sizeof(buf), &bytesRead, nullptr) && bytesRead > 0) {
-        // WriteFile(hOutput, buf, bytesRead, &bytesWritten, nullptr);
-        // self->vtparserWrite(buf, bytesRead);
         std::vector<char> vec_buf(bytesRead);
         std::memcpy(vec_buf.data(), buf, bytesRead);
         self->queue->push(std::move(vec_buf));
     }
 }
 
-ConPTY::ConPTY(ThreadSafeQueue<std::vector<char>> *q) : queue(q) {
+ConPtyBackend::ConPtyBackend(ThreadSafeQueue<std::vector<char>> *q) : queue(q) {
     // Enable VT processing on the host console
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD consoleMode{};
@@ -84,7 +82,7 @@ ConPTY::ConPTY(ThreadSafeQueue<std::vector<char>> *q) : queue(q) {
     m_hListener = reinterpret_cast<HANDLE>(_beginthread(PipeListener, 0, this));
 }
 
-ConPTY::~ConPTY() {
+ConPtyBackend::~ConPtyBackend() {
     // Kill the shell process
     if (m_piClient.hProcess) {
         TerminateProcess(m_piClient.hProcess, 0);
@@ -106,13 +104,13 @@ ConPTY::~ConPTY() {
     }
 }
 
-bool ConPTY::Write(const std::string& input) {
+void ConPtyBackend::write(const std::string& input) {
     DWORD written{};
-    return WriteFile(m_hPipeOut, input.c_str(),
+    WriteFile(m_hPipeOut, input.c_str(),
                      static_cast<DWORD>(input.size()), &written, nullptr);
 }
 
-bool ConPTY::Resize(SHORT cols, SHORT rows) {
-    COORD size{ cols, rows };
-    return SUCCEEDED(ResizePseudoConsole(m_hPC, size));
+void ConPtyBackend::resize(int cols, int rows) {
+    COORD size{ static_cast<SHORT>(cols), static_cast<SHORT>(rows) };
+    SUCCEEDED(ResizePseudoConsole(m_hPC, size));
 }
