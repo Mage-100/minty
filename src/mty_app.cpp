@@ -4,6 +4,7 @@
 #include "threadsafequeue.hpp"
 #include "vtparser.hpp"
 #include <memory>
+#include <cstring>
 
 MintyApp::MintyApp() {
     byte_queue = std::make_unique<ThreadSafeQueue<std::vector<char>>>();
@@ -20,7 +21,7 @@ MintyApp::MintyApp() {
 
     runtime->setPTYResizeCallback([&](int cols, int rows) {
         // conpty->Resize(cols, rows);
-        pty->resize(cols, rows);
+        // pty->resize(cols, rows);
     });
 }
 

@@ -15,6 +15,16 @@ uniform sampler1D  metadata_tex;
 
 uniform int pass;
 
+vec4 unpack_color(uint v)
+{
+    return vec4(
+        float((v >> 0u)  & 0xFFu) / 255.0,
+        float((v >> 8u)  & 0xFFu) / 255.0,
+        float((v >> 16u) & 0xFFu) / 255.0,
+        float((v >> 24u) & 0xFFu) / 255.0
+    );
+}
+
 void main() {
     int col = gl_InstanceID % int(grid_size.x);
     int row = gl_InstanceID / int(grid_size.x);
@@ -59,8 +69,10 @@ void main() {
 
     // --- 8. UV (aPos maps directly to atlas region) ---
     v_uv = uv_slot.xy + aPos * uv_slot.zw;
-    v_fg = unpackUnorm4x8(cell.g);
-    v_bg = unpackUnorm4x8(cell.b);
+    // v_fg = unpackUnorm4x8(cell.g);
+    // v_bg = unpackUnorm4x8(cell.b);
+    v_fg = unpack_color(cell.g);
+    v_bg = unpack_color(cell.b);
     // v_local for debug border
     v_local = aPos;
 }

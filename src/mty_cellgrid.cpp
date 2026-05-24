@@ -1,5 +1,6 @@
 #include "mty_cellgrid.hpp"
 #include <algorithm>
+#include <cstring>
 
 CellGrid::CellGrid(int cols, int rows) : m_cols(cols), m_rows(rows) {
     m_buffer = std::vector<cell_t>(m_cols * m_rows);
@@ -10,7 +11,7 @@ CellGrid::CellGrid(int cols, int rows) : m_cols(cols), m_rows(rows) {
             int index = x + y * m_cols;
 
             int ch = 32 + (index % (126 - 32));
-            m_buffer[index].glyph_id = ch - 32;
+            m_buffer[index].glyph_id = 0;
             m_buffer[index].bg_color = 0x00000000;
             m_buffer[index].fg_color = 0xFFFFFFFF;
             m_buffer[index].flags = 0;

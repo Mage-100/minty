@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 #include "ConPtyBackend.hpp"
 
 #include "threadsafequeue.hpp"
@@ -114,3 +116,5 @@ void ConPtyBackend::resize(int cols, int rows) {
     COORD size{ static_cast<SHORT>(cols), static_cast<SHORT>(rows) };
     SUCCEEDED(ResizePseudoConsole(m_hPC, size));
 }
+
+#endif // _WIN32

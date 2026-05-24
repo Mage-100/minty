@@ -1,4 +1,6 @@
 #pragma once
+#ifdef _WIN32
+
 #include "interfaces/IPtyBackend.hpp"
 #include "threadsafequeue.hpp"
 
@@ -18,3 +20,5 @@ private:
     HANDLE  m_hListener = INVALID_HANDLE_VALUE;
     PROCESS_INFORMATION m_piClient{};
 };
+
+#endif
