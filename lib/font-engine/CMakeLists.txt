@@ -6,9 +6,13 @@ add_library(font_engine_internal STATIC
 target_include_directories(font_engine_internal PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-target_include_directories(font_engine_internal INTERFACE
 
+target_include_directories(font_engine_internal INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(font_engine_internal PRIVATE
+    Freetype::Freetype
 )
 
 add_library(font_engine
