@@ -5,15 +5,19 @@
 
 #include <font_engine/font_engine.hpp>
 #include <font_engine/font_utils.hpp>
+#include "font_engine/FontID.hpp"
 #include "font_engine/internal/font_manager.hpp"
+#include <font_engine/FaceID.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 #include <harfbuzz/hb-ft.h>
 
+using font_list = std::vector<font_obj_t>;
+
 FontEngine::FontEngine()
-    : fontmanager(std::make_unique<FontManager>()) {
+    : font_manager(std::make_unique<FontManager>()) {
     int error;
     error = FT_Init_FreeType(&ft_library);
     if (error) {
@@ -26,7 +30,7 @@ FontEngine::FontEngine()
 FaceID FontEngine::loadFaceFromPath(const std::string& path, int font_size) {
     assert(font_size > 0);
 
-    FaceID id = path.length() + font_size;
+    auto id = makeFaceID();
 
     FT_Face face;
     int error = FT_New_Face(ft_library, path.c_str(), 0, &face);
@@ -54,7 +58,7 @@ FaceID FontEngine::loadFaceFromPath(const std::string& path, int font_size) {
 }
 
 FaceID FontEngine::loadEmojiFontFromPath(const std::string& path) {
-    FaceID id = path.length() + 100;
+    auto id = makeFaceID();
 
     FT_Face face;
     int error = FT_New_Face(ft_library, path.c_str(), 0, &face);
@@ -96,6 +100,21 @@ bool FontEngine::isFaceMonospaced(FaceID id) {
 
     if (FT_IS_FIXED_WIDTH(it->second.face) == 1) return true;
     return false;
+}
+
+FontID FontEngine::loadFontByName(const std::string& name, int font_size) {
+    FontID fontID = makeFontID();
+
+    font_list list = font_manager->get_font_by_name(name);
+    std::vector<FaceID> faceID_list;
+
+    for (auto& i : list) {
+        FaceID id = this->loadFaceFromPath(i.fontPath, font_size);
+        faceID_list.push_back(id);
+    }
+
+    font_cache.insert({fontID, faceID_list});
+    return fontID;
 }
 
 bool FontEngine::rasterize(FaceID id, std::uint32_t ch) {

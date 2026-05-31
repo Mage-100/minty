@@ -1,12 +1,13 @@
 #pragma once
+#include "font_engine/FontID.hpp"
 #include <string>
 #include <memory>
 #include <unordered_map>
 
-typedef int FaceID;
-
 #include <ft2build.h>
 #include FT_FREETYPE_H
+
+#include <font_engine/FaceID.hpp>
 
 struct GlyphMetadata {
     int glyph_width;
@@ -33,6 +34,10 @@ public:
     FontEngine();
     ~FontEngine();
 
+    // Only to load fonts - not colored fonts (emojis)
+    // uses font_manager
+    FontID loadFontByName(const std::string&, int);
+
     FaceID loadFaceFromPath(const std::string&, int);
     FaceID loadEmojiFontFromPath(const std::string&);
     bool isFaceMonospaced(FaceID);
@@ -40,8 +45,9 @@ public:
     GlyphMetadata* getGlyph(FaceID, std::uint32_t);
 private:
     FT_Library ft_library;
-    std::unique_ptr<FontManager> fontmanager;
+    std::unique_ptr<FontManager> font_manager;
 
     std::unordered_map<FaceID, FontFace> font_face_cache;
+    std::unordered_map<FontID, std::vector<FaceID>> font_cache;
     bool isFaceInCache(FaceID);
 };

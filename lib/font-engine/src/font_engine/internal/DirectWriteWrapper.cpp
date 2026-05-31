@@ -18,6 +18,14 @@ template <class T> inline void SafeRelease(T **ppT)
     }
 }
 
+//
+font_style _mapFontStyle(DWRITE_FONT_STYLE style) {
+    if (style == DWRITE_FONT_STYLE_ITALIC) {
+        return FONT_STYLE_ITALIC;
+    }
+    return FONT_STYLE_NORMAL;
+}
+
 // Converts UTF-16 string to UTF-8
 std::string wideToString(const wchar_t* wstr) {
     int size_needed = WideCharToMultiByte(
@@ -151,6 +159,8 @@ font_list DirectWriteWrapper::get_font_by_name(const std::string& name) {
                         hr = pLocalLoader->GetFilePathFromKey(referenceKey, referenceKeySize, path, pathLen + 1);
 
                         font_obj_t font_obj(name, wideToString(path));
+                        font_obj.weight = static_cast<font_weight>(weight);
+                        font_obj.style = _mapFontStyle(style);
                         list.push_back(font_obj);
 
                         delete[] path;
@@ -195,15 +205,16 @@ font_list DirectWriteWrapper::get_font_by_name(const std::string& name, const fo
     }
 
     IDWriteFont* pFont = nullptr;
-    DWRITE_FONT_WEIGHT fontWeight;
+    DWRITE_FONT_WEIGHT fontWeight = static_cast<DWRITE_FONT_WEIGHT>(
+        params.weight.value_or(FONT_WEIGHT_REGULAR)
+    );
     DWRITE_FONT_STRETCH fontStretch = DWRITE_FONT_STRETCH_NORMAL;
     DWRITE_FONT_STYLE fontStyle;
 
-    if (params.weight == FONT_WEIGHT_BOLD) fontWeight = DWRITE_FONT_WEIGHT_BOLD;
-    else if (params.weight == FONT_WEIGHT_REGULAR) fontWeight = DWRITE_FONT_WEIGHT_REGULAR;
-
-    if (params.style == FONT_STYLE_NORMAL) fontStyle = DWRITE_FONT_STYLE_NORMAL;
-    else if (params.style == FONT_STYLE_ITALIC) fontStyle = DWRITE_FONT_STYLE_ITALIC;
+    if (params.style.has_value()) {
+        if (params.style == FONT_STYLE_NORMAL) fontStyle = DWRITE_FONT_STYLE_NORMAL;
+        else if (params.style == FONT_STYLE_ITALIC) fontStyle = DWRITE_FONT_STYLE_ITALIC;
+    }
 
     if (SUCCEEDED(hr)) {
         hr = pFontFamily->GetFirstMatchingFont(
@@ -244,6 +255,8 @@ font_list DirectWriteWrapper::get_font_by_name(const std::string& name, const fo
             hr = pLocalLoader->GetFilePathFromKey(referenceKey, referenceKeySize, path, pathLen + 1);
 
             font_obj_t font_obj(name, wideToString(path));
+            font_obj.weight = static_cast<font_weight>(fontWeight);
+            font_obj.style = _mapFontStyle(fontStyle);
             list.push_back(font_obj);
 
             delete[] path;
