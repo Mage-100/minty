@@ -19,11 +19,11 @@ template <class T> inline void SafeRelease(T **ppT)
 }
 
 //
-font_style _mapFontStyle(DWRITE_FONT_STYLE style) {
+FontStyle _mapFontStyle(DWRITE_FONT_STYLE style) {
     if (style == DWRITE_FONT_STYLE_ITALIC) {
-        return FONT_STYLE_ITALIC;
+        return FontStyle::Italic;
     }
-    return FONT_STYLE_NORMAL;
+    return FontStyle::Normal;
 }
 
 // Converts UTF-16 string to UTF-8
@@ -74,8 +74,8 @@ DirectWriteWrapper::DirectWriteWrapper() {
     }
 }
 
-font_list DirectWriteWrapper::get_font_by_name(const std::string& name) {
-    font_list list;
+std::vector<FontObj> DirectWriteWrapper::get_font_by_name(const std::string& name) {
+    std::vector<FontObj> list;
     std::wstring familyName(name.begin(), name.end());
     uint32_t index;
     BOOL exists;
@@ -158,8 +158,8 @@ font_list DirectWriteWrapper::get_font_by_name(const std::string& name) {
                         wchar_t* path = new wchar_t[pathLen + 1];
                         hr = pLocalLoader->GetFilePathFromKey(referenceKey, referenceKeySize, path, pathLen + 1);
 
-                        font_obj_t font_obj(name, wideToString(path));
-                        font_obj.weight = static_cast<font_weight>(weight);
+                        FontObj font_obj(name, wideToString(path));
+                        font_obj.weight = static_cast<FontWeight>(weight);
                         font_obj.style = _mapFontStyle(style);
                         list.push_back(font_obj);
 
@@ -181,8 +181,8 @@ font_list DirectWriteWrapper::get_font_by_name(const std::string& name) {
 }
 
 
-font_list DirectWriteWrapper::get_font_by_name(const std::string& name, const font_parameters params) {
-    font_list list;
+std::vector<FontObj> DirectWriteWrapper::get_font_by_name(const std::string& name, const FontParameters params) {
+    std::vector<FontObj> list;
     std::wstring familyName(name.begin(), name.end());
     uint32_t index;
     BOOL exists;
@@ -206,14 +206,14 @@ font_list DirectWriteWrapper::get_font_by_name(const std::string& name, const fo
 
     IDWriteFont* pFont = nullptr;
     DWRITE_FONT_WEIGHT fontWeight = static_cast<DWRITE_FONT_WEIGHT>(
-        params.weight.value_or(FONT_WEIGHT_REGULAR)
+        params.weight.value_or(FontWeight::Regular)
     );
     DWRITE_FONT_STRETCH fontStretch = DWRITE_FONT_STRETCH_NORMAL;
     DWRITE_FONT_STYLE fontStyle;
 
     if (params.style.has_value()) {
-        if (params.style == FONT_STYLE_NORMAL) fontStyle = DWRITE_FONT_STYLE_NORMAL;
-        else if (params.style == FONT_STYLE_ITALIC) fontStyle = DWRITE_FONT_STYLE_ITALIC;
+        if (params.style == FontStyle::Normal) fontStyle = DWRITE_FONT_STYLE_NORMAL;
+        else if (params.style == FontStyle::Italic) fontStyle = DWRITE_FONT_STYLE_ITALIC;
     }
 
     if (SUCCEEDED(hr)) {
@@ -254,8 +254,8 @@ font_list DirectWriteWrapper::get_font_by_name(const std::string& name, const fo
             wchar_t* path = new wchar_t[pathLen + 1];
             hr = pLocalLoader->GetFilePathFromKey(referenceKey, referenceKeySize, path, pathLen + 1);
 
-            font_obj_t font_obj(name, wideToString(path));
-            font_obj.weight = static_cast<font_weight>(fontWeight);
+            FontObj font_obj(name, wideToString(path));
+            font_obj.weight = static_cast<FontWeight>(fontWeight);
             font_obj.style = _mapFontStyle(fontStyle);
             list.push_back(font_obj);
 

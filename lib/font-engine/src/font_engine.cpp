@@ -5,61 +5,67 @@
 
 #include <font_engine/font_engine.hpp>
 #include <font_engine/font_utils.hpp>
-#include "font_engine/FontID.hpp"
 #include "font_engine/internal/font_manager.hpp"
-#include <font_engine/FaceID.hpp>
+#include <font_engine/TypedID.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 #include <harfbuzz/hb-ft.h>
 
-using font_list = std::vector<font_obj_t>;
+static void ftCheck(FT_Error error, const char* msg) {
+    if (error)
+        throw FontEngineError(msg);
+}
+
+// FreeType metrics for scalable faces are in 26.6 fixed-point; shift to pixels.
+static int fixedToPixels(FT_Pos v) { return static_cast<int>(v >> 6); }
 
 FontEngine::FontEngine()
     : font_manager(std::make_unique<FontManager>()) {
-    int error;
-    error = FT_Init_FreeType(&ft_library);
-    if (error) {
-        std::cerr << __FILE__ << ":" << __LINE__ << std::endl;
-        std::cerr << "Error: Failed to initialize Freetype Library" << std::endl;
-        exit(EXIT_FAILURE);
-    }
+    ftCheck(FT_Init_FreeType(&ft_library),
+                "Failed to initialize FreeType library");
 }
 
-FaceID FontEngine::loadFaceFromPath(const std::string& path, int font_size) {
-    assert(font_size > 0);
+FontEngine::FaceEntry& FontEngine::requireFace(FaceID id) {
+    auto it = faceCache.find(id);
+    if (it == faceCache.end())
+        throw FontEngineError("Invalid FaceID");
+    return it->second;
+}
 
-    auto id = makeFaceID();
+const FontEngine::FaceEntry& FontEngine::requireFace(FaceID id) const {
+    auto it = faceCache.find(id);
+    if (it == faceCache.end())
+        throw FontEngineError("Invalid FaceID");
+    return it->second;
+}
 
-    FT_Face face;
-    int error = FT_New_Face(ft_library, path.c_str(), 0, &face);
-    if (error == FT_Err_Unknown_File_Format) {
-        std::cerr << "Error: Unknown Font File Format" << std::endl;
-        exit(EXIT_FAILURE);
-    } else if (error) {
-        std::cerr << "Error: Failed to open Font File: " << path << std::endl;
-        exit(EXIT_FAILURE);
-    }
+FaceID FontEngine::loadFaceFromPath(const std::string& path, int pixelSize) {
+    assert(pixelSize > 0);
 
-    error = FT_Set_Pixel_Sizes(face, font_size, 0);
-    if (error) {
-        std::cerr << "Error: Failed to set pixel size" << std::endl;
-        exit(EXIT_FAILURE);
-    }
+    FT_Face face = nullptr;
+    FT_Error err = FT_New_Face(ft_library, path.c_str(), 0, &face);
+    if (err == FT_Err_Unknown_File_Format)
+        throw FontEngineError("Unknown font file format: " + path);
+    if (err)
+        throw FontEngineError("Failed to open font file: " + path);
 
-    FontFace f_face;
-    f_face.face = face;
-    f_face.ascender = face->ascender >> 6;
-    f_face.descender = face->descender >> 6;
+    ftCheck(FT_Set_Pixel_Sizes(face, 0, pixelSize),
+            "Failed to set pixel size");
 
-    font_face_cache.insert({id, f_face});
+    FaceEntry entry;
+    entry.face      = face;
+    entry.isEmoji   = false;
+    entry.ascender  = fixedToPixels(face->ascender);
+    entry.descender = fixedToPixels(face->descender);
+
+    auto id = FaceID::make();
+    faceCache.emplace(id, std::move(entry));
     return id;
 }
 
-FaceID FontEngine::loadEmojiFontFromPath(const std::string& path) {
-    auto id = makeFaceID();
-
+FaceID FontEngine::loadEmojiFaceFromPath(const std::string& path) {
     FT_Face face;
     int error = FT_New_Face(ft_library, path.c_str(), 0, &face);
     if (error == FT_Err_Unknown_File_Format) {
@@ -72,122 +78,96 @@ FaceID FontEngine::loadEmojiFontFromPath(const std::string& path) {
 
     FT_Select_Size(face, 0);
 
-    FontFace f_face;
-    f_face.face = face;
-    f_face.isEmoji = true;
-    f_face.ascender = face->ascender >> 6;
-    f_face.descender = face->descender >> 6;
+    FaceEntry entry;
+    entry.face = face;
+    entry.isEmoji = true;
+    entry.ascender = face->ascender >> 6;
+    entry.descender = face->descender >> 6;
 
-    font_face_cache.insert({id, f_face});
+    auto id = FaceID::make();
+    faceCache.emplace(id, std::move(entry));
     return id;
 }
 
-bool FontEngine::isFaceInCache(FaceID id) {
-    auto it = font_face_cache.find(id);
-    if (it != font_face_cache.end()) {
-        return true;
-    }
-    return false;
+bool FontEngine::isFaceMonospaced(FaceID id) const {
+    const FaceEntry& entry = requireFace(id); // throws if invalid
+    return FT_IS_FIXED_WIDTH(entry.face) != 0;
 }
 
-bool FontEngine::isFaceMonospaced(FaceID id) {
-    if (!isFaceInCache(id)) {
-        std::cerr << "Not Valid FaceID" << std::endl;
+FontID FontEngine::loadFontByName(const std::string& name, int pixelSize) {
+    std::vector<FontObj> faces = font_manager->get_font_by_name(name);
+
+    std::vector<FontEntry> entries;
+    entries.reserve(faces.size());
+
+    for (auto& obj : faces) {
+        FontEntry fontEntry {
+            loadFaceFromPath(obj.fontPath, pixelSize), // throws on error
+            obj
+        };
+        entries.push_back(std::move(fontEntry));
+    }
+
+    auto id = FontID::make();
+    fontCache.emplace(id, std::move(entries));
+    return id;
+}
+
+bool FontEngine::rasterizeIntoCache(FaceID id, std::uint32_t codepoint) {
+    FaceEntry& faceEntry = requireFace(id);
+
+
+    FT_UInt glyphIndex = FT_Get_Char_Index(faceEntry.face, codepoint);
+    FT_Int32 loadFlags = faceEntry.isEmoji ? (FT_LOAD_RENDER | FT_LOAD_COLOR) : FT_LOAD_RENDER;
+    int error;
+
+    if (FT_Load_Glyph(faceEntry.face, glyphIndex, loadFlags) != 0)
         return false;
-    }
 
-    auto it = font_face_cache.find(id);
-
-    if (FT_IS_FIXED_WIDTH(it->second.face) == 1) return true;
-    return false;
-}
-
-FontID FontEngine::loadFontByName(const std::string& name, int font_size) {
-    FontID fontID = makeFontID();
-
-    font_list list = font_manager->get_font_by_name(name);
-    std::vector<FaceID> faceID_list;
-
-    for (auto& i : list) {
-        FaceID id = this->loadFaceFromPath(i.fontPath, font_size);
-        faceID_list.push_back(id);
-    }
-
-    font_cache.insert({fontID, faceID_list});
-    return fontID;
-}
-
-bool FontEngine::rasterize(FaceID id, std::uint32_t ch) {
-    if (!isFaceInCache(id)) {
-        std::cerr << "Not Valid FaceID" << std::endl;
-        return false;
-    }
-
-    auto it = font_face_cache.find(id);
+    FT_Bitmap& bmp = faceEntry.face->glyph->bitmap;
+    const int w = static_cast<int>(bmp.width);
+    const int h = static_cast<int>(bmp.rows);
 
     GlyphMetadata metadata;
-
-    int glyph_index = FT_Get_Char_Index(it->second.face, ch);
-    int error;
-    if (it->second.isEmoji) {
-        error = FT_Load_Glyph(it->second.face, glyph_index, FT_LOAD_RENDER | FT_LOAD_COLOR);
-    } else {
-        error = FT_Load_Glyph(it->second.face, glyph_index, FT_LOAD_RENDER);
-    }
-    if(error) {
-        std::cerr << "Failed to load char: " << ch << std::endl;
-        return false;
-    }
-
-    metadata.glyph_width           = it->second.face->glyph->bitmap.width;
-    metadata.glyph_height          = it->second.face->glyph->bitmap.rows;
-    metadata.bearingX              = it->second.face->glyph->bitmap_left;
-    metadata.bearingY              = it->second.face->glyph->bitmap_top;
-    metadata.advanceX              = it->second.face->glyph->advance.x >> 6;
-    metadata.pixelBufferStride     = it->second.face->glyph->bitmap.pitch;
+    metadata.width    = w;
+    metadata.height   = h;
+    metadata.bearingX = faceEntry.face->glyph->bitmap_left;
+    metadata.bearingY = faceEntry.face->glyph->bitmap_top;
+    metadata.advanceX = fixedToPixels(faceEntry.face->glyph->advance.x);
+    metadata.stride   = bmp.pitch;
+    metadata.pixels.resize(static_cast<size_t>(w * h), 0);
 
 
-    int w = it->second.face->glyph->bitmap.width;
-    int h = it->second.face->glyph->bitmap.rows;
-    metadata.pixelBuffer.resize(w * h);
-
-    if (it->second.isEmoji) {
+    if (faceEntry.isEmoji) {
         for (int i = 0; i < w * h; i++) {
-            std::uint32_t b = it->second.face->glyph->bitmap.buffer[i*4+0];
-            std::uint32_t g = it->second.face->glyph->bitmap.buffer[i*4+1];
-            std::uint32_t r = it->second.face->glyph->bitmap.buffer[i*4+2];
-            std::uint32_t a = it->second.face->glyph->bitmap.buffer[i*4+3];
+
+            const std::uint8_t* src = bmp.buffer + (i * 4);
+            std::uint32_t b = src[0];
+            std::uint32_t g = src[1];
+            std::uint32_t r = src[2];
+            std::uint32_t a = src[3];
 
             std::uint32_t pixel = a << 8*3 | (b << 8*2) | (g << 8*1) | r;
-            metadata.pixelBuffer[i] = pixel;
+            metadata.pixels[i] = pixel;
         }
     } else {
         for (int i = 0; i < w * h; i++) {
-            std::uint8_t pixel = it->second.face->glyph->bitmap.buffer[i];
-            if (pixel > 0) {
-                metadata.pixelBuffer[i] = static_cast<std::uint32_t>(pixel) << 8*3;
-            } else {
-                metadata.pixelBuffer[i] = 0;
-            }
+            metadata.pixels[i] = static_cast<std::uint32_t>(bmp.buffer[i]) << 24;
         }
     }
 
-    it->second.glyphMetadataCache.insert({ch, metadata});
+    faceEntry.glyphCache.emplace(codepoint, metadata);
     return true;
 }
 
-GlyphMetadata* FontEngine::getGlyph(FaceID id, std::uint32_t ch) {
-    if (!isFaceInCache(id)) {
-        std::cerr << "Not Valid FaceID" << std::endl;
-        return nullptr;
-    }
+const GlyphMetadata* FontEngine::getGlyph(FaceID id, std::uint32_t codepoint) {
+    FaceEntry& entry = requireFace(id);
 
-    auto it = font_face_cache.find(id);
-    auto glyphIt = it->second.glyphMetadataCache.find(ch);
+    auto glyphIt = entry.glyphCache.find(codepoint);
 
-    if (glyphIt == it->second.glyphMetadataCache.end()) {
-        this->rasterize(id,ch);
-        glyphIt = it->second.glyphMetadataCache.find(ch);
+    if (glyphIt == entry.glyphCache.end()) {
+        this->rasterizeIntoCache(id,codepoint);
+        glyphIt = entry.glyphCache.find(codepoint);
     }
 
 
@@ -195,12 +175,7 @@ GlyphMetadata* FontEngine::getGlyph(FaceID id, std::uint32_t ch) {
 }
 
 FontEngine::~FontEngine() {
-    auto it = font_face_cache.begin();
-
-    while (it!=font_face_cache.end()) {
-        FT_Done_Face(it->second.face);
-        it++;
-    }
-
+    for (auto& [id, entry] : faceCache)
+        FT_Done_Face(entry.face);
     FT_Done_FreeType(ft_library);
 }

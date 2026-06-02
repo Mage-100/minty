@@ -13,6 +13,6 @@ public:
     DirectWriteWrapper();
     ~DirectWriteWrapper();
 
-    font_list get_font_by_name(const std::string& name) override;
-    font_list get_font_by_name(const std::string& name, const font_parameters) override;
+    std::vector<FontObj> get_font_by_name(const std::string& name) override;
+    std::vector<FontObj> get_font_by_name(const std::string& name, const FontParameters) override;
 };

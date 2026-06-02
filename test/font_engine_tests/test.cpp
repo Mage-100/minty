@@ -9,11 +9,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-using font_list = std::vector<font_obj_t>;
-
 TEST(FONT_MANAGER, GetFontFaceCount) {
     FontManager fontmanager;
-    font_list list;
+    std::vector<FontObj> list;
 #ifdef _WIN32
     list = fontmanager.get_font_by_name("Consolas");
     EXPECT_TRUE(list.size() == 4) << "Font list for the font Consolas is empty";
@@ -22,7 +20,7 @@ TEST(FONT_MANAGER, GetFontFaceCount) {
 
 TEST(FONT_MANAGER, GetFontByName) {
     FontManager fontmanager;
-    font_list list;
+    std::vector<FontObj> list;
 #ifdef _WIN32
     list = fontmanager.get_font_by_name("Consolas");
     std::array<std::string, 4> expected = {
@@ -33,7 +31,7 @@ TEST(FONT_MANAGER, GetFontByName) {
     };
 
     for (const std::string& path : expected) {
-        bool found = std::any_of(list.begin(), list.end(), [&](const font_obj_t& obj) {
+        bool found = std::any_of(list.begin(), list.end(), [&](const FontObj& obj) {
             return obj.fontPath == path;
         });
         EXPECT_TRUE(found);
@@ -57,28 +55,28 @@ TEST(FONT_ENGINE, TestGlyphPixelBuffer) {
     FaceID id = engine.loadFaceFromPath("C:\\WINDOWS\\FONTS\\CONSOLA.TTF", 100);
 #endif
     ASSERT_TRUE(engine.isFaceMonospaced(id));
-    engine.rasterize(id, 'A');
+    engine.rasterizeIntoCache(id, 'A');
 
-    GlyphMetadata* data1 = engine.getGlyph(id, 'A');
-    stbi_write_png("test1.png", data1->glyph_width, data1->glyph_height, 4, data1->pixelBuffer.data(), data1->glyph_width * 4);
+    const GlyphMetadata* data1 = engine.getGlyph(id, 'A');
+    stbi_write_png("test1.png", data1->width, data1->height, 4, data1->pixels.data(), data1->width * 4);
 
-    GlyphMetadata* data2 = engine.getGlyph(id, 'Z');
-    stbi_write_png("test2.png", data2->glyph_width, data2->glyph_height, 4, data2->pixelBuffer.data(), data2->glyph_width * 4);
+    const GlyphMetadata* data2 = engine.getGlyph(id, 'Z');
+    stbi_write_png("test2.png", data2->width, data2->height, 4, data2->pixels.data(), data2->width * 4);
 }
 
 TEST(FONT_ENGINE, TestEmoji) {
     FontEngine engine;
-    FaceID id = engine.loadEmojiFontFromPath(COLOR_EMOJI_FONT_PATH);
-    int result1 = engine.rasterize(id, 0x1F601);
-    GlyphMetadata* data = engine.getGlyph(id, 0x1F601);
-    int result2 = stbi_write_png("test3.png", data->glyph_width, data->glyph_height, 4, data->pixelBuffer.data(), data->glyph_width * 4);
+    FaceID id = engine.loadEmojiFaceFromPath(COLOR_EMOJI_FONT_PATH);
+    int result1 = engine.rasterizeIntoCache(id, 0x1F601);
+    const GlyphMetadata* data = engine.getGlyph(id, 0x1F601);
+    int result2 = stbi_write_png("test3.png", data->width, data->height, 4, data->pixels.data(), data->width * 4);
 
     ASSERT_TRUE(result1 & result2);
 }
 
 TEST(FONT_ENGINE, CreateEmojiAtlas) {
     FontEngine engine;
-    FaceID id = engine.loadEmojiFontFromPath(COLOR_EMOJI_FONT_PATH);
+    FaceID id = engine.loadEmojiFaceFromPath(COLOR_EMOJI_FONT_PATH);
     int atlas_width = 4096;
     int atlas_height = 4096;
 
@@ -105,34 +103,34 @@ TEST(FONT_ENGINE, CreateEmojiAtlas) {
 
     for (auto& [start, end] : emojiRanges) {
         for (int ch = start; ch <= end; ch++) {
-            GlyphMetadata* data = engine.getGlyph(id, ch);
-            if (data->glyph_width > atlas_width) continue;
+            const GlyphMetadata* data = engine.getGlyph(id, ch);
+            if (data->width > atlas_width) continue;
 
-            if (cursorX + data->glyph_width > atlas_width) {
+            if (cursorX + data->width > atlas_width) {
                 cursorX = 0;
                 cursorY += currRowHeight;
                 currRowHeight = 0;
             }
 
-            if (data->glyph_height > currRowHeight) {
-                currRowHeight = data->glyph_height;
+            if (data->height > currRowHeight) {
+                currRowHeight = data->height;
             }
 
-            if (cursorY + data->glyph_height > atlas_height) {
+            if (cursorY + data->height > atlas_height) {
                 atlas_height *= 2;
                 atlas.resize(atlas_width * atlas_height, 0);
             }
 
-            for (int y = 0; y < data->glyph_height; y++) {
-                for (int x = 0; x < data->glyph_width; x++) {
+            for (int y = 0; y < data->height; y++) {
+                for (int x = 0; x < data->width; x++) {
                     int col = cursorX + x;
                     int row = cursorY + y;
 
-                    atlas[col + row * atlas_width] = data->pixelBuffer[x + y * data->glyph_width];
+                    atlas[col + row * atlas_width] = data->pixels[x + y * data->width];
                 }
             }
 
-            cursorX += data->glyph_width;
+            cursorX += data->width;
         }
     }
 

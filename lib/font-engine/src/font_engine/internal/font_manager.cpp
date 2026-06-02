@@ -14,24 +14,24 @@ public:
 #endif
     }
 
-    font_list get_font_by_name(const std::string& name) {
-        font_list list = font_backend->get_font_by_name(name);
+    std::vector<FontObj> get_font_by_name(const std::string& name) {
+        std::vector<FontObj> list = font_backend->get_font_by_name(name);
         return list;
     }
 
-    font_list get_font_by_name(const std::string& name, const font_parameters params) {
-        font_list list = font_backend->get_font_by_name(name, params);
+    std::vector<FontObj> get_font_by_name(const std::string& name, const FontParameters params) {
+        std::vector<FontObj> list = font_backend->get_font_by_name(name, params);
         return list;
     }
 };
 
 FontManager::FontManager() : pImpl(std::make_unique<impl>()) {};
 
-font_list FontManager::get_font_by_name(const std::string& name) {
+std::vector<FontObj> FontManager::get_font_by_name(const std::string& name) {
     return pImpl->get_font_by_name(name);
 }
 
-font_list FontManager::get_font_by_name(const std::string& name, const font_parameters params) {
+std::vector<FontObj> FontManager::get_font_by_name(const std::string& name, const FontParameters params) {
     return pImpl->get_font_by_name(name, params);
 }
 
