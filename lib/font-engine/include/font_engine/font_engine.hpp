@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/gtc/constants.hpp>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -29,6 +30,7 @@ struct FontEngineError : std::runtime_error {
 };
 
 class FontManager;
+class FontContainer;
 
 class FontEngine {
 public:
@@ -37,10 +39,6 @@ public:
 
     FontEngine(const FontEngine&)            = delete;
     FontEngine& operator=(const FontEngine&) = delete;
-
-    // Load all faces that make up a named font family (regular, bold, italic…).
-    // Throws FontEngineError on failure.
-    FontID loadFontByName(const std::string& name, int pixelSize);
 
     // Load a single face directly from a file path.
     // Throws FontEngineError on failure.
@@ -59,6 +57,9 @@ public:
     // or nullptr if the codepoint could not be rasterized.
     const GlyphMetadata* getGlyph(FaceID id, std::uint32_t codepoint);
 
+    // Font container
+    FontContainer* createFontContainer();
+
 private:
     struct FaceEntry {
         FT_Face face        = nullptr;
@@ -66,11 +67,6 @@ private:
         int     ascender    = 0;
         int     descender   = 0;
         std::unordered_map<std::uint32_t, GlyphMetadata> glyphCache;
-    };
-
-    struct FontEntry {
-        FaceID   faceID;
-        FontObj  fontObj;
     };
 
     // Looks up an entry; throws FontEngineError if not found.
@@ -81,6 +77,7 @@ private:
     FT_Library ft_library = nullptr;
     std::unique_ptr<FontManager> font_manager;
 
-    std::unordered_map<FaceID, FaceEntry>              faceCache;
-    std::unordered_map<FontID, std::vector<FontEntry>> fontCache;
+    std::unordered_map<FaceID, FaceEntry> faceCache;
+
+    std::vector<std::unique_ptr<FontContainer>> m_containers;
 };

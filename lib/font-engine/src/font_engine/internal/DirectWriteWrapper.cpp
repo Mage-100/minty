@@ -1,6 +1,8 @@
 #include <dwrite.h>
 #include <iostream>
 #include <string>
+#include <winerror.h>
+#include <winnt.h>
 
 #include "DirectWriteWrapper.hpp"
 #include "font_engine/font_utils.hpp"
@@ -108,6 +110,31 @@ std::vector<FontObj> DirectWriteWrapper::get_font_by_name(const std::string& nam
             hr = pFontFamily->GetFont(i, &pFont);
             if (FAILED(hr)) continue;
 
+            // Get Face name
+            IDWriteLocalizedStrings* names = nullptr;
+            hr = pFont->GetFaceNames(&names);
+
+            std::wstring faceName;
+
+            if (SUCCEEDED(hr)) {
+                std::uint32_t index;
+                BOOL exists;
+                hr = names->FindLocaleName(L"en-us", &index, &exists);
+
+                if (!exists) {
+                    index = 0;
+                }
+
+                std::uint32_t length;
+                names->GetStringLength(index, &length);
+
+                faceName.resize(length + 1);
+                names->GetString(index, faceName.data(), length+1);
+                faceName.pop_back(); // remove '\0'
+            }
+
+            SafeRelease(&names);
+
             // Get weight, style, stretch
             DWRITE_FONT_WEIGHT  weight  = pFont->GetWeight();   // e.g. 400 = Regular, 700 = Bold
             DWRITE_FONT_STYLE   style   = pFont->GetStyle();    // Normal, Italic, Oblique
@@ -158,7 +185,10 @@ std::vector<FontObj> DirectWriteWrapper::get_font_by_name(const std::string& nam
                         wchar_t* path = new wchar_t[pathLen + 1];
                         hr = pLocalLoader->GetFilePathFromKey(referenceKey, referenceKeySize, path, pathLen + 1);
 
-                        FontObj font_obj(name, wideToString(path));
+                        FontObj font_obj(
+                            name + " - " + wideToString(faceName.data()),
+                            wideToString(path)
+                        );
                         font_obj.weight = static_cast<FontWeight>(weight);
                         font_obj.style = _mapFontStyle(style);
                         list.push_back(font_obj);

@@ -5,13 +5,12 @@
 
 #include <font_engine/font_engine.hpp>
 #include <font_engine/font_utils.hpp>
+#include <font_engine/font_container.hpp>
 #include "font_engine/internal/font_manager.hpp"
 #include <font_engine/TypedID.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-
-#include <harfbuzz/hb-ft.h>
 
 static void ftCheck(FT_Error error, const char* msg) {
     if (error)
@@ -90,91 +89,70 @@ FaceID FontEngine::loadEmojiFaceFromPath(const std::string& path) {
 }
 
 bool FontEngine::isFaceMonospaced(FaceID id) const {
-    const FaceEntry& entry = requireFace(id); // throws if invalid
+    const FaceEntry& entry = requireFace(id);
     return FT_IS_FIXED_WIDTH(entry.face) != 0;
 }
 
-FontID FontEngine::loadFontByName(const std::string& name, int pixelSize) {
-    std::vector<FontObj> faces = font_manager->get_font_by_name(name);
-
-    std::vector<FontEntry> entries;
-    entries.reserve(faces.size());
-
-    for (auto& obj : faces) {
-        FontEntry fontEntry {
-            loadFaceFromPath(obj.fontPath, pixelSize), // throws on error
-            obj
-        };
-        entries.push_back(std::move(fontEntry));
-    }
-
-    auto id = FontID::make();
-    fontCache.emplace(id, std::move(entries));
-    return id;
-}
-
-bool FontEngine::rasterizeIntoCache(FaceID id, std::uint32_t codepoint) {
+bool FontEngine::rasterizeIntoCache(FaceID id, uint32_t codepoint) {
     FaceEntry& faceEntry = requireFace(id);
-
 
     FT_UInt glyphIndex = FT_Get_Char_Index(faceEntry.face, codepoint);
     FT_Int32 loadFlags = faceEntry.isEmoji ? (FT_LOAD_RENDER | FT_LOAD_COLOR) : FT_LOAD_RENDER;
-    int error;
 
     if (FT_Load_Glyph(faceEntry.face, glyphIndex, loadFlags) != 0)
         return false;
 
     FT_Bitmap& bmp = faceEntry.face->glyph->bitmap;
-    const int w = static_cast<int>(bmp.width);
-    const int h = static_cast<int>(bmp.rows);
+    int w = static_cast<int>(bmp.width);
+    int h = static_cast<int>(bmp.rows);
 
-    GlyphMetadata metadata;
-    metadata.width    = w;
-    metadata.height   = h;
-    metadata.bearingX = faceEntry.face->glyph->bitmap_left;
-    metadata.bearingY = faceEntry.face->glyph->bitmap_top;
-    metadata.advanceX = fixedToPixels(faceEntry.face->glyph->advance.x);
-    metadata.stride   = bmp.pitch;
-    metadata.pixels.resize(static_cast<size_t>(w * h), 0);
-
+    GlyphMetadata meta;
+    meta.width    = w;
+    meta.height   = h;
+    meta.bearingX = faceEntry.face->glyph->bitmap_left;
+    meta.bearingY = faceEntry.face->glyph->bitmap_top;
+    meta.advanceX = fixedToPixels(faceEntry.face->glyph->advance.x);
+    meta.stride   = bmp.pitch;
+    meta.pixels.resize(static_cast<size_t>(w * h), 0);
 
     if (faceEntry.isEmoji) {
         for (int i = 0; i < w * h; i++) {
-
-            const std::uint8_t* src = bmp.buffer + (i * 4);
-            std::uint32_t b = src[0];
-            std::uint32_t g = src[1];
-            std::uint32_t r = src[2];
-            std::uint32_t a = src[3];
-
-            std::uint32_t pixel = a << 8*3 | (b << 8*2) | (g << 8*1) | r;
-            metadata.pixels[i] = pixel;
+            const uint8_t* src = bmp.buffer + (i * 4);
+            meta.pixels[i] = (static_cast<uint32_t>(src[3]) << 24) |
+                             (static_cast<uint32_t>(src[2]) << 16) |
+                             (static_cast<uint32_t>(src[1]) << 8)  |
+                              static_cast<uint32_t>(src[0]);
         }
     } else {
-        for (int i = 0; i < w * h; i++) {
-            metadata.pixels[i] = static_cast<std::uint32_t>(bmp.buffer[i]) << 24;
-        }
+        for (int i = 0; i < w * h; i++)
+            meta.pixels[i] = static_cast<uint32_t>(bmp.buffer[i]) << 24;
     }
 
-    faceEntry.glyphCache.emplace(codepoint, metadata);
+    faceEntry.glyphCache.emplace(codepoint, std::move(meta));
     return true;
 }
 
-const GlyphMetadata* FontEngine::getGlyph(FaceID id, std::uint32_t codepoint) {
+const GlyphMetadata* FontEngine::getGlyph(FaceID id, uint32_t codepoint) {
     FaceEntry& entry = requireFace(id);
 
     auto glyphIt = entry.glyphCache.find(codepoint);
-
     if (glyphIt == entry.glyphCache.end()) {
-        this->rasterizeIntoCache(id,codepoint);
+        rasterizeIntoCache(id, codepoint);
         glyphIt = entry.glyphCache.find(codepoint);
     }
-
 
     return &glyphIt->second;
 }
 
+FontContainer* FontEngine::createFontContainer() {
+    auto c = std::make_unique<FontContainer>(ft_library, font_manager.get());
+    auto* ptr = c.get();
+    m_containers.push_back(std::move(c));
+    return ptr;
+}
+
 FontEngine::~FontEngine() {
+    m_containers.clear();
     for (auto& [id, entry] : faceCache)
         FT_Done_Face(entry.face);
     FT_Done_FreeType(ft_library);

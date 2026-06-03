@@ -3,6 +3,8 @@
 #include <vector>
 #include <font_engine/font_engine.hpp>
 #include <font_engine/font_utils.hpp>
+#include <font_engine/font_container.hpp>
+#include <font_engine/FontFace.hpp>
 #include <font_engine/internal/font_manager.hpp>
 #include <gtest/gtest.h>
 
@@ -136,6 +138,74 @@ TEST(FONT_ENGINE, CreateEmojiAtlas) {
 
 
     stbi_write_png("emojiglyph.png", atlas_width, atlas_height, 4, atlas.data(), atlas_width * 4);
+}
+
+TEST(FONT_CONTAINER, BindAndHasFace) {
+#ifdef _WIN32
+    FontEngine engine;
+    FontContainer* c = engine.createFontContainer();
+
+    c->bindFont("Consolas");
+    EXPECT_TRUE(c->hasFace(FontWeight::Regular, FontStyle::Normal));
+    EXPECT_TRUE(c->hasFace(FontWeight::Bold, FontStyle::Normal));
+    EXPECT_TRUE(c->hasFace(FontWeight::Bold, FontStyle::Italic));
+    EXPECT_FALSE(c->hasFace(FontWeight::Black, FontStyle::Italic));
+    EXPECT_FALSE(c->hasFace(FontWeight::Thin, FontStyle::Normal));
+#endif
+}
+
+TEST(FONT_CONTAINER, AcquireFace) {
+#ifdef _WIN32
+    FontEngine engine;
+    FontContainer* c = engine.createFontContainer();
+    c->bindFont("Consolas");
+
+    FontFace face = c->acquireFace(FontWeight::Regular, FontStyle::Normal);
+    EXPECT_TRUE(face.valid);
+    EXPECT_GT(face.unitsPerEm, 0);
+    EXPECT_GT(face.ascender, 0);
+    EXPECT_LT(face.descender, 0);
+
+    FontFace face2 = c->acquireFace(FontWeight::Regular, FontStyle::Normal);
+    EXPECT_EQ(face.id, face2.id);
+#endif
+}
+
+TEST(FONT_CONTAINER, GetGlyph) {
+#ifdef _WIN32
+    FontEngine engine;
+    FontContainer* c = engine.createFontContainer();
+    c->bindFont("Consolas");
+
+    FontFace face = c->acquireFace(FontWeight::Regular, FontStyle::Normal);
+
+    const GlyphMetadata* glyph20 = c->getGlyph(face, 20, 'A');
+    ASSERT_NE(glyph20, nullptr);
+    EXPECT_GT(glyph20->width, 0);
+    EXPECT_GT(glyph20->height, 0);
+    EXPECT_GT(glyph20->advanceX, 0);
+
+    const GlyphMetadata* glyph40 = c->getGlyph(face, 40, 'A');
+    ASSERT_NE(glyph40, nullptr);
+    EXPECT_GT(glyph40->width, glyph20->width);
+    EXPECT_GT(glyph40->advanceX, glyph20->advanceX);
+#endif
+}
+
+TEST(FONT_CONTAINER, UnbindAndRebind) {
+#ifdef _WIN32
+    FontEngine engine;
+    FontContainer* c = engine.createFontContainer();
+
+    c->bindFont("Consolas");
+    EXPECT_TRUE(c->hasFace(FontWeight::Regular, FontStyle::Normal));
+
+    c->unbind();
+    EXPECT_FALSE(c->hasFace(FontWeight::Regular, FontStyle::Normal));
+
+    c->bindFont("Consolas");
+    EXPECT_TRUE(c->hasFace(FontWeight::Regular, FontStyle::Normal));
+#endif
 }
 
 int main(int argc, char** argv) {

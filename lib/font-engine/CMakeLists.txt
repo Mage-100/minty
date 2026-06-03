@@ -1,10 +1,12 @@
 add_library(font_engine_internal STATIC
     src/font_engine/internal/font_manager.cpp
     src/font_engine/internal/DirectWriteWrapper.cpp
+    src/font_engine/font_container.cpp
 )
 
 target_include_directories(font_engine_internal PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_include_directories(font_engine_internal INTERFACE
