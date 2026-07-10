@@ -22,3 +22,5 @@ target_link_libraries(font_engine_test PRIVATE
 )
 include(GoogleTest)
 gtest_discover_tests(font_engine_test)
+
+add_subdirectory(font_tests)

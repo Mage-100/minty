@@ -1,3 +1,5 @@
+add_subdirectory(font)
+
 add_executable(minty main.cpp)
 target_include_directories(minty PRIVATE
     "${CMAKE_SOURCE_DIR}/include"
