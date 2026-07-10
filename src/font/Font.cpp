@@ -21,6 +21,12 @@ Font::Font() {
 }
 
 Font::~Font() {
+    if (!cache.empty()) {
+        for(const auto& [key, value] : cache) {
+            FT_Done_Face(value.face);
+        }
+    }
+
     FT_Done_FreeType(_library);
 }
 
