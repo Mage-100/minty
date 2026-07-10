@@ -1,5 +1,6 @@
 add_library(Font
     "Font.cpp"
+    "FontAtlas.cpp"
 )
 
 target_link_libraries(Font PUBLIC
