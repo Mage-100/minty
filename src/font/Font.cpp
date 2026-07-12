@@ -1,3 +1,6 @@
+#include <iostream>
+#include <string>
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -46,4 +49,80 @@ int Font::addFontFromPath(const std::string& path, int font_size) {
 
     cache.insert({cache_counter, obj});
     return cache_counter++;
+}
+
+unsigned char* Font::getGlyphBuffer(int fontID, unsigned int codepoint) {
+    auto& glyphObj = loadGlyph(fontID, codepoint);
+    return glyphObj.bitmapBuffer;
+}
+
+Font::GlyphSize Font::getGlyphSize(int fontID, unsigned int codepoint) {
+    auto& glyphObj = loadGlyph(fontID, codepoint);
+    return glyphObj.size;
+}
+
+Font::GlyphBearing Font::getGlyphBearing(int fontID, unsigned int codepoint) {
+    auto& glyphObj = loadGlyph(fontID, codepoint);
+    return glyphObj.bearing;
+}
+
+Font::GlyphBitmap Font::getGlyphBitmap(int fontID, unsigned int codepoint) {
+    auto& glyphObj = loadGlyph(fontID, codepoint);
+    return glyphObj.bitmap;
+}
+
+signed long int Font::getGlyphAdvanceX(int fontID, unsigned int codepoint) {
+    auto& glyphObj = loadGlyph(fontID, codepoint);
+    return glyphObj.advanceX;
+}
+
+std::unordered_map<int, Font::_FontObject>::iterator Font::checkFontID(int fontID) {
+    auto it = cache.find(fontID);
+
+    if (it == cache.end())
+        throw "Font not created: " + std::to_string(fontID);
+
+    return it;
+}
+
+Font::GlyphObject& Font::loadGlyph(int fontID, unsigned int codepoint) {
+    auto fontIter = checkFontID(fontID);
+    auto& fontObj = fontIter->second;
+
+    auto it = fontObj.glyph_cache.find(codepoint);
+
+    if (it != fontObj.glyph_cache.end()) {
+        return it->second;
+    } else {
+        auto& face = fontObj.face;
+
+        FT_UInt glyphIndex = FT_Get_Char_Index(fontObj.face, codepoint);
+        FT_Int32 loadFlags = FT_LOAD_RENDER;
+
+        if (FT_Load_Glyph(fontObj.face, glyphIndex, loadFlags) != 0)
+            std::cerr << "Failed to find glyph: Codepoint: " + std::to_string(codepoint);
+
+        GlyphObject glyphObj = {
+            .size = {
+                .width = face->glyph->metrics.width,
+                .height = face->glyph->metrics.height
+            },
+            .advanceX = face->glyph->metrics.horiAdvance,
+            .bearing = {
+                .x = face->glyph->metrics.horiBearingX,
+                .y = face->glyph->metrics.horiBearingY
+            },
+            .bitmap = {
+                .width = face->glyph->bitmap.width,
+                .height = face->glyph->bitmap.rows,
+                .pitch = face->glyph->bitmap.pitch
+            },
+            .bitmapBuffer = face->glyph->bitmap.buffer
+        };
+
+        auto inserted = fontObj.glyph_cache.insert({codepoint, glyphObj});
+
+        if (inserted.second == true) return inserted.first->second;
+        else throw "Failed to load glyph: Codepoint: " + std::to_string(codepoint);
+    }
 }
