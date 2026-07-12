@@ -56,4 +56,7 @@ public:
 private:
     std::unordered_map<int, _FontObject>::iterator checkFontID(int fontID);
     GlyphObject& loadGlyph(int fontID, unsigned int codepoint);
+
+    template<typename T>
+    T fixedToPixels(T x);
 };

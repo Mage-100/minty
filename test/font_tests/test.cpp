@@ -54,13 +54,15 @@ TEST(FONT_TESTS, GeneralTest) {
     try {
         Font font;
         Path robotoFontRegular = font_source / "RobotoMono/RobotoMono-Regular.ttf";
-        int f1 = font.addFontFromPath(robotoFontRegular.string(), 200);
+        int f1 = font.addFontFromPath(robotoFontRegular.string(), 50);
 
         FontAtlas atlas;
         int a1 = atlas.generate(500, 500);
 
-        addGlyphHelper(font, f1, atlas, a1, 'A');
-
+        for (unsigned int i = 32; i <= 126; i++) {
+            addGlyphHelper(font, f1, atlas, a1, i);
+        }
+        
         auto& atlasBuffer = atlas.getAtlas(a1);
         int a = stbi_write_png("atlas_test.png", 500, 500, 4, atlasBuffer.data(), 500*4);
     } catch(const std::exception& e) {

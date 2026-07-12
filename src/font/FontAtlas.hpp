@@ -29,9 +29,9 @@ private:
         int width;
         int height;
         int stride;
-        int usedWidth = 0;
-        int usedHeight = 0;
-        int maxGlyphHeight;
+        int maxGlyphHeight = 0;
+        int penx = 0;
+        int peny = 0;
         std::vector<AddGlyphInfo> glyphs = {};
         std::vector<std::uint32_t> atlas;
     };

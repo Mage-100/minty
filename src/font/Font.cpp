@@ -104,13 +104,13 @@ Font::GlyphObject& Font::loadGlyph(int fontID, unsigned int codepoint) {
 
         GlyphObject glyphObj = {
             .size = {
-                .width = face->glyph->metrics.width,
-                .height = face->glyph->metrics.height
+                .width = fixedToPixels(face->glyph->metrics.width),
+                .height = fixedToPixels(face->glyph->metrics.height)
             },
-            .advanceX = face->glyph->metrics.horiAdvance,
+            .advanceX = fixedToPixels(face->glyph->metrics.horiAdvance),
             .bearing = {
-                .x = face->glyph->metrics.horiBearingX,
-                .y = face->glyph->metrics.horiBearingY
+                .x = fixedToPixels(face->glyph->metrics.horiBearingX),
+                .y = fixedToPixels(face->glyph->metrics.horiBearingY)
             },
             .bitmap = {
                 .width = face->glyph->bitmap.width,
@@ -125,4 +125,9 @@ Font::GlyphObject& Font::loadGlyph(int fontID, unsigned int codepoint) {
         if (inserted.second == true) return inserted.first->second;
         else throw "Failed to load glyph: Codepoint: " + std::to_string(codepoint);
     }
+}
+
+template<typename T>
+T Font::fixedToPixels(T x) {
+    return x >> 6;
 }

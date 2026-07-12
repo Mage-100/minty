@@ -10,7 +10,7 @@ int FontAtlas::generate(int w, int h) {
     AtlasObject obj = {
         .width = w,
         .height = h,
-        .stride = w * 4,
+        .stride = w,
         .maxGlyphHeight = 0,
         .atlas = std::vector<std::uint32_t>(w * h, 0xFF003300)
     };
@@ -40,6 +40,18 @@ void FontAtlas::m_addGlyphToAtlas(AtlasObject& obj) {
 
     auto& atlasBuffer = obj.atlas;
 
+    auto& maxGlyphHeight = obj.maxGlyphHeight;
+	if (bitmapHeight > maxGlyphHeight)
+		maxGlyphHeight = bitmapHeight;
+
+    auto& penX = obj.penx;
+    auto& penY = obj.peny;
+
+	if (penX + glyphInfo.advanceX > obj.width) {
+		penX = 0;
+		penY += maxGlyphHeight;
+	}
+
     for (int y = 0; y < bitmapHeight; y++) {
         for (int x = 0; x < bitmapWidth; x++) {
             std::uint32_t grayLevelPixel = bitmapBuffer[x + y * bitmapPitch];
@@ -50,9 +62,12 @@ void FontAtlas::m_addGlyphToAtlas(AtlasObject& obj) {
 
             std::uint32_t atlasPixel = alpha | blue | green | red;
 
-            atlasBuffer[x + y * obj.width] = atlasPixel;
+			int index = (penX + x) + (penY + y) * obj.stride;
+            atlasBuffer[index] = atlasPixel;
         }
     }
+
+    penX += glyphInfo.advanceX;
 }
 
 const std::vector<std::uint32_t>& FontAtlas::getAtlas(int atlasID) {
