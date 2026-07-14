@@ -15,7 +15,7 @@ static void addGlyphHelper(Font& font, int fontID, FontAtlas& atlas, int atlasID
     auto bitmap = font.getGlyphBitmap(fontID, codepoint);
     auto bitmapBuffer = font.getGlyphBuffer(fontID, codepoint);
 
-    FontAtlas::AddGlyphInfo info = {
+    FontAtlas::GlyphInfo info = {
         .glyphWidth = size.width,
         .glyphHeight = size.height,
         .advanceX = font.getGlyphAdvanceX(fontID, codepoint),
@@ -57,14 +57,16 @@ TEST(FONT_TESTS, GeneralTest) {
         int f1 = font.addFontFromPath(robotoFontRegular.string(), 50);
 
         FontAtlas atlas;
-        int a1 = atlas.generate(500, 500);
+        int aW = 500;
+        int aH = 500;
+        int a1 = atlas.generate(aW, aH);
 
         for (unsigned int i = 32; i <= 126; i++) {
             addGlyphHelper(font, f1, atlas, a1, i);
         }
         
         auto& atlasBuffer = atlas.getAtlas(a1);
-        int a = stbi_write_png("atlas_test.png", 500, 500, 4, atlasBuffer.data(), 500*4);
+        int a = stbi_write_png("atlas_test.png", aW, aH, 4, atlasBuffer.data(), aW * 4);
     } catch(const std::exception& e) {
         FAIL() << "std::exception: " << e.what();
     } catch(...) {

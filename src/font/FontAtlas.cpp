@@ -20,7 +20,7 @@ int FontAtlas::generate(int w, int h) {
     return cache_counter++;
 }
 
-void FontAtlas::addGlyph(int atlasID, AddGlyphInfo info) {
+void FontAtlas::addGlyph(int atlasID, GlyphInfo info) {
     auto it = cache.find(atlasID);
 
     if (it == cache.end())
@@ -31,7 +31,7 @@ void FontAtlas::addGlyph(int atlasID, AddGlyphInfo info) {
 }
 
 void FontAtlas::m_addGlyphToAtlas(AtlasObject& obj) {
-    AddGlyphInfo& glyphInfo = obj.glyphs.back();
+    GlyphInfo& glyphInfo = obj.glyphs.back();
     auto& bitmapBuffer = glyphInfo.bitmapBuffer;
 
     auto bitmapWidth = glyphInfo.bitmapWidth;

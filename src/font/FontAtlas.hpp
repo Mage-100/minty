@@ -4,7 +4,7 @@
 
 class FontAtlas {
 public:
-    struct AddGlyphInfo {
+    struct GlyphInfo {
         unsigned int codepoint;
 
         signed long int glyphWidth;
@@ -32,7 +32,7 @@ private:
         int maxGlyphHeight = 0;
         int penx = 0;
         int peny = 0;
-        std::vector<AddGlyphInfo> glyphs = {};
+        std::vector<GlyphInfo> glyphs = {};
         std::vector<std::uint32_t> atlas;
     };
 
@@ -45,7 +45,7 @@ public:
     ~FontAtlas();
 
     int generate(int w, int h);
-    void addGlyph(int atlasID, AddGlyphInfo info);
+    void addGlyph(int atlasID, GlyphInfo info);
 
     const std::vector<std::uint32_t>& getAtlas(int atlasID);
 };

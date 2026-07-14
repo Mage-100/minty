@@ -24,3 +24,4 @@ include(GoogleTest)
 gtest_discover_tests(font_engine_test)
 
 add_subdirectory(font_tests)
+add_subdirectory(font_render_test)
