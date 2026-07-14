@@ -44,9 +44,9 @@ public:
 	void setVec4<float>(const std::string& name, glm::vec4 v);
 
 
-	void setMat2(const std::string& name, glm::mat2 m);
-	void setMat3(const std::string& name, glm::mat3 m);
-	void setMat4(const std::string& name, glm::mat4 m);
+	void setMat2(const std::string& name, glm::mat2& m);
+	void setMat3(const std::string& name, glm::mat3& m);
+	void setMat4(const std::string& name, glm::mat4& m);
 private:
 	void _compileVertexShader();
 	void _compileFragmentShader();

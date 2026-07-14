@@ -4,6 +4,17 @@
 
 #include <glad/glad.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+
+#include <glm/mat2x2.hpp>
+#include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
+
 #include "Shader.hpp"
 
 static std::string ShaderError(const std::string& msg) {
@@ -69,6 +80,7 @@ Shader::Shader(const std::string& shaderPath) {
 
 		_compileVertexShader();
 		_compileFragmentShader();
+		_compileShaderProgram();
 
 	}
 	catch (std::exception& e) {
@@ -140,4 +152,9 @@ void Shader::setFloat3(const std::string& name, GLfloat v0, GLfloat v1, GLfloat 
 void Shader::setFloat4(const std::string& name, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3) {
 	int location = _getUniformLocation(name);
 	glad_glUniform4f(location, v0, v1, v2, v3);
+}
+
+void Shader::setMat4(const std::string& name, glm::mat4& m) {
+	int location = _getUniformLocation(name);
+	glad_glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(m));
 }
