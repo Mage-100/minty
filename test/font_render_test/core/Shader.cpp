@@ -154,6 +154,12 @@ void Shader::setFloat4(const std::string& name, GLfloat v0, GLfloat v1, GLfloat 
 	glad_glUniform4f(location, v0, v1, v2, v3);
 }
 
+template<>
+void Shader::setVec2<glm::vec2>(const std::string& name, const glm::vec2& v) {
+	int location = _getUniformLocation(name);
+	glad_glUniform2fv(location, 1, glm::value_ptr(v));
+}
+
 void Shader::setMat4(const std::string& name, glm::mat4& m) {
 	int location = _getUniformLocation(name);
 	glad_glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(m));

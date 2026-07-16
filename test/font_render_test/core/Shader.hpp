@@ -29,20 +29,11 @@ public:
 	void setFloat3(const std::string& name, GLfloat v0, GLfloat v1, GLfloat v2);
 	void setFloat4(const std::string& name, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
 
-	template<typename T>
-	void setVec2(const std::string& name, glm::vec2 v);
-	template<typename T>
-	void setVec3(const std::string& name, glm::vec3 v);
-	template<typename T>
-	void setVec4(const std::string& name, glm::vec4 v);
+	template<typename Vec>
+	void setVec2(const std::string& name, const Vec& v) = delete;
 
 	template<>
-	void setVec2<float>(const std::string& name, glm::vec2 v);
-	template<>
-	void setVec3<float>(const std::string& name, glm::vec3 v);
-	template<>
-	void setVec4<float>(const std::string& name, glm::vec4 v);
-
+	void setVec2<glm::vec2>(const std::string& name, const glm::vec2& v);
 
 	void setMat2(const std::string& name, glm::mat2& m);
 	void setMat3(const std::string& name, glm::mat3& m);

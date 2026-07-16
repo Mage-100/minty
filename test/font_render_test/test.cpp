@@ -1,3 +1,4 @@
+#include <iostream>
 #include <filesystem>
 #include <vector>
 #include <array>
@@ -11,6 +12,11 @@
 #include <VertexArray.hpp>
 #include <VertexBufferLayout.hpp>
 #include <Shader.hpp>
+
+#include <Font.hpp>
+#include <FontAtlas.hpp>
+
+using Path = std::filesystem::path;
 
 constexpr int WINDOW_WIDTH = 800;
 constexpr int WINDOW_HEIGHT = 600;
@@ -34,8 +40,42 @@ std::array<Pos, 6> CreateQuad(float x, float y, float w, float h) {
 	} };
 }
 
+static void addGlyphHelper(Font& font, int fontID, FontAtlas& atlas, int atlasID, unsigned int codepoint) {
+    auto size = font.getGlyphSize(fontID, codepoint);
+    auto bearing = font.getGlyphBearing(fontID, codepoint);
+    auto bitmap = font.getGlyphBitmap(fontID, codepoint);
+    auto bitmapBuffer = font.getGlyphBuffer(fontID, codepoint);
+
+    FontAtlas::GlyphInfo info = {
+        .glyphWidth = size.width,
+        .glyphHeight = size.height,
+        .advanceX = font.getGlyphAdvanceX(fontID, codepoint),
+        .bearingX = bearing.x,
+        .bearingY = bearing.y,
+        .ascender = 0,
+        .descender = 0,
+        .bitmapHeight = bitmap.height,
+        .bitmapWidth = bitmap.width,
+        .bitmapPitch = bitmap.pitch,
+        .bitmapBuffer = bitmapBuffer
+    };
+
+    atlas.addGlyph(atlasID, info);
+}
+
 int main() {
+	Path fontSource = std::filesystem::path(FONT_SOURCE);
+	Path fontPath = fontSource / "RobotoMono" / "RobotoMono-Regular.ttf";
+
+	Font font;
 	int font_size = 16;
+	int f1 = font.addFontFromPath(fontPath.string(), font_size);
+
+	FontAtlas atlas;
+	int atlasW = font_size * 26;
+	int atlasH = atlasW;
+	int a1 = atlas.generate(atlasW, atlasH);
+
 
 	int cols = 50;
 	int padding_x = 5;
@@ -50,6 +90,9 @@ int main() {
 	
 	int fb_width = 0;
 	int fb_height = 0;
+
+	int cell_width = font_size;
+	int cell_height = row_height;
 
 	Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "Font Render Test");
 
@@ -71,16 +114,20 @@ int main() {
 
 
 	std::vector<Pos> vertices;
-	vertices.reserve(6 * rows * cols);
+
+	//auto q1 = CreateQuad(2, 2, 100, 100);
+
+	//vertices.insert(vertices.end(), q1.begin(), q1.end());
 
 	for (int y = 0; y < rows; y++) {
 		for (int x = 0; x < cols; x++) {
-			auto q = CreateQuad(
-				padding_x + (x * (gap_x + font_size)),
-				padding_y + (y * (gap_y + row_height)),
-				font_size, row_height);
-			
-			vertices.insert(vertices.end(), q.begin(), q.end());
+			Pos p = {
+				static_cast<float>(x * (cell_width + gap_x)),
+				static_cast<float>(y * (cell_height + gap_y)),
+				0.0f
+			};
+
+			vertices.push_back(p);
 		}
 	}
 
@@ -91,7 +138,9 @@ int main() {
 
 	VertexArray va;
 	va.AddBuffer(vb, layout);
-	
+
+	glad_glVertexAttribDivisor(0, 1);
+
 
 	while (!window.shouldWindowClose()) {
 		glfwWaitEvents();
@@ -106,8 +155,12 @@ int main() {
 
 		va.Bind();
 		s.use();
+		s.setFloat("padding_x", padding_x);
+		s.setFloat("padding_y", padding_y);
+		s.setVec2("cellDimension", glm::vec2(cell_width, cell_height));
 		s.setMat4("projection", projection);
-		glad_glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
+		//glad_glDrawArrays(GL_TRIANGLES, 0, 6);
+		glad_glDrawArraysInstanced(GL_TRIANGLES, 0, 6, cols * rows);
 
 		window.flush();
 	}
