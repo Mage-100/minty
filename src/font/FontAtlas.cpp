@@ -1,3 +1,6 @@
+#include <ranges>
+#include <stdexcept>
+#include <array>
 #include <cstdint>
 #include <string>
 #include "FontAtlas.hpp"
@@ -52,6 +55,9 @@ void FontAtlas::m_addGlyphToAtlas(AtlasObject& obj) {
 		penY += maxGlyphHeight;
 	}
 
+    glyphInfo.atlasPosX = penX;
+    glyphInfo.atlasPosY = penY;
+
     for (int y = 0; y < bitmapHeight; y++) {
         for (int x = 0; x < bitmapWidth; x++) {
             std::uint32_t grayLevelPixel = bitmapBuffer[x + y * bitmapPitch];
@@ -80,4 +86,31 @@ const std::vector<std::uint32_t>& FontAtlas::getAtlas(int atlasID) {
         throw "Glyphs not added yet: " + std::to_string(atlasID);
 
     return it->second.atlas;
+}
+
+std::array<int, 2> FontAtlas::getGlyphPos(int atlasID, unsigned int codepoint) {
+	auto it = cache.find(atlasID);
+
+	if (it == cache.end())
+		throw std::runtime_error("Atlas not created yet: " + std::to_string(atlasID));
+
+	auto& atlasObj = it->second;
+
+	if (atlasObj.glyphs.size() == 0)
+		throw "Glyphs not added yet: " + std::to_string(atlasID);
+
+	auto glyphIt = std::ranges::find_if(atlasObj.glyphs,
+		[&codepoint](const auto& glyphObj) {
+			return codepoint == glyphObj.codepoint;
+		}
+	);
+
+	if (glyphIt == atlasObj.glyphs.end()) {
+		throw std::runtime_error("Glyph not found: Codepoint: " + std::to_string(codepoint));
+	}
+
+	auto& glyph = *glyphIt;
+
+    return { glyph.atlasPosX, glyph.atlasPosY };
+
 }

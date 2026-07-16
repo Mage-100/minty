@@ -16,6 +16,7 @@ static void addGlyphHelper(Font& font, int fontID, FontAtlas& atlas, int atlasID
     auto bitmapBuffer = font.getGlyphBuffer(fontID, codepoint);
 
     FontAtlas::GlyphInfo info = {
+        .codepoint = codepoint,
         .glyphWidth = size.width,
         .glyphHeight = size.height,
         .advanceX = font.getGlyphAdvanceX(fontID, codepoint),

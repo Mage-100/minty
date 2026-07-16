@@ -5,17 +5,18 @@
       "name": "glad",
       "features": [
         "gl-api-46",
-        "loader"
+        "loader",
+        "gl-api-33"
       ]
     },
     "glfw3",
+    "glm",
     "gtest",
     {
       "name": "harfbuzz",
       "features": [
         "freetype"
       ]
-    },
-    "glm"
+    }
   ]
 }

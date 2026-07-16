@@ -47,6 +47,7 @@ static void addGlyphHelper(Font& font, int fontID, FontAtlas& atlas, int atlasID
     auto bitmapBuffer = font.getGlyphBuffer(fontID, codepoint);
 
     FontAtlas::GlyphInfo info = {
+		.codepoint = codepoint,
         .glyphWidth = size.width,
         .glyphHeight = size.height,
         .advanceX = font.getGlyphAdvanceX(fontID, codepoint),
@@ -76,6 +77,11 @@ int main() {
 	int atlasH = atlasW;
 	int a1 = atlas.generate(atlasW, atlasH);
 
+	addGlyphHelper(font, f1, atlas, a1, 'A');
+	addGlyphHelper(font, f1, atlas, a1, 'B');
+	addGlyphHelper(font, f1, atlas, a1, 'C');
+	addGlyphHelper(font, f1, atlas, a1, 'D');
+	addGlyphHelper(font, f1, atlas, a1, 'E');
 
 	int cols = 50;
 	int padding_x = 5;
@@ -96,7 +102,6 @@ int main() {
 
 	Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "Font Render Test");
 
-
 	window.onFramebufferSizeCallback([&fb_width, &fb_height](int w, int h) {
 		glad_glViewport(0.0f, 0.0f, w, h);
 
@@ -114,10 +119,6 @@ int main() {
 
 
 	std::vector<Pos> vertices;
-
-	//auto q1 = CreateQuad(2, 2, 100, 100);
-
-	//vertices.insert(vertices.end(), q1.begin(), q1.end());
 
 	for (int y = 0; y < rows; y++) {
 		for (int x = 0; x < cols; x++) {
@@ -140,7 +141,6 @@ int main() {
 	va.AddBuffer(vb, layout);
 
 	glad_glVertexAttribDivisor(0, 1);
-
 
 	while (!window.shouldWindowClose()) {
 		glfwWaitEvents();

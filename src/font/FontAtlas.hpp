@@ -22,6 +22,9 @@ public:
         unsigned int bitmapWidth;
         int bitmapPitch;
 
+        int atlasPosX;
+        int atlasPosY;
+
         unsigned char* bitmapBuffer;
     };
 private:
@@ -48,4 +51,6 @@ public:
     void addGlyph(int atlasID, GlyphInfo info);
 
     const std::vector<std::uint32_t>& getAtlas(int atlasID);
+
+    std::array<int, 2> getGlyphPos(int atlasID, unsigned int codepoint);
 };
