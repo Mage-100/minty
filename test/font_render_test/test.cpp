@@ -12,6 +12,10 @@
 #include <VertexArray.hpp>
 #include <VertexBufferLayout.hpp>
 #include <Shader.hpp>
+#include <Texture2D.hpp>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #include <Font.hpp>
 #include <FontAtlas.hpp>
@@ -69,28 +73,28 @@ int main() {
 	Path fontSource = std::filesystem::path(FONT_SOURCE);
 	Path fontPath = fontSource / "RobotoMono" / "RobotoMono-Regular.ttf";
 
-	int font_size = 16;
-	FontLibrary font1;
-	auto id = font1.addFontFromPath(fontPath.string(), font_size); 
-	font1.addGlyph(id, 'A');
-	font1.addGlyph(id, 'B');
-	font1.addGlyph(id, 'C');
-	font1.addGlyph(id, 'D');
-	font1.addGlyph(id, 'E');
+	int font_size = 30;
+	FontLibrary font_lib;
+	auto id = font_lib.addFontFromPath(fontPath.string(), font_size); 
+	font_lib.addGlyph(id, 'A');
+	font_lib.addGlyph(id, 'B');
+	font_lib.addGlyph(id, 'C');
+	font_lib.addGlyph(id, 'D');
+	font_lib.addGlyph(id, 'E');
 
-	if (font1.hasGlyph(id, 'E')) {
-		auto [x, y] = font1.atlas_getGlyphPos(id, 'E');
+	if (font_lib.hasGlyph(id, 'A')) {
+		auto [x, y] = font_lib.atlas_getGlyphPos(id, 'A');
 		std::cout << "X: " << x << " Y: " << y << std::endl;
 	}
 
 
-	int cols = 50;
+	int cols = 15;
 	int padding_x = 5;
 	int gap_x = 2;
 	int WINDOW_WIDTH = (font_size * cols) + (2*padding_x) + (gap_x * (cols-1));
 
 	int row_height = font_size * 1.5;
-	int rows = 25;
+	int rows = 10;
 	int padding_y = 5;
 	int gap_y = 2;
 	int WINDOW_HEIGHT = (row_height * rows) + (2 * padding_y) + (gap_y * (rows - 1)); 
@@ -141,6 +145,13 @@ int main() {
 	VertexArray va;
 	va.AddBuffer(vb, layout);
 
+	auto [atlasW, atlasH] = font_lib.atlas_getDimension(id);
+	const void* atlasBuffer = font_lib.atlas_getBuffer(id).data();
+	int a = stbi_write_png("font_render_test.png", atlasW, atlasH, 4, atlasBuffer, atlasW * 4);
+	Texture2D glyph_atlas(atlasW, atlasH, const_cast<void*>(atlasBuffer));
+
+	auto [glyphW, glyphH] = font_lib.glyph_getDimension(id, 'A');
+
 	glad_glVertexAttribDivisor(0, 1);
 
 	while (!window.shouldWindowClose()) {
@@ -160,6 +171,8 @@ int main() {
 		s.setFloat("padding_y", padding_y);
 		s.setVec2("cellDimension", glm::vec2(cell_width, cell_height));
 		s.setMat4("projection", projection);
+		s.setVec2("atlas_size", glm::vec2(atlasW, atlasH));
+		s.setVec2("glyph_size", glm::vec2(glyphW, glyphH));
 		//glad_glDrawArrays(GL_TRIANGLES, 0, 6);
 		glad_glDrawArraysInstanced(GL_TRIANGLES, 0, 6, cols * rows);
 

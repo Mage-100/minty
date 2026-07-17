@@ -23,6 +23,8 @@ vec2 texCoords[6] = vec2[6](
 );
 
 out vec2 TexCoord;
+out vec2 uv;
+flat out int test;
 
 uniform float padding_x;
 uniform float padding_y;
@@ -36,6 +38,10 @@ void main() {
 
 	gl_Position = projection * vec4(quad, 1.0);
 	TexCoord = texCoords[gl_VertexID];
+	uv = vertex[gl_VertexID].xy;
+
+	if (gl_InstanceID == 10) test = 1;
+	else test = 0;
 }
 
 #shader(fragment)
@@ -43,7 +49,21 @@ void main() {
 
 out vec4 FragColor;
 in vec2 TexCoord;
+in vec2 uv;
+flat in int test;
+
+uniform sampler2D texture;
+uniform vec2 atlas_size;
+uniform vec2 glyph_size;
 
 void main() {
-	FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	atlas_size;
+	
+	if (test == 1) {
+		// FragColor = vec4(vec3(1.0), 1.0);
+		FragColor = texelFetch(texture, ivec2(uv * glyph_size), 0);
+	} else {
+		FragColor = vec4(vec3(0.2), 1.0);
+	}
+
 }

@@ -16,11 +16,13 @@ std::size_t FontLibrary::addFontFromPath(const std::string& path, std::size_t fo
 	int f = font.addFontFromPath(path, font_size);
 
 	int atlasW = font_size * 26;
-	int atlasH = atlasW * 30;
+	int atlasH = atlasW;
 	int a = atlas.generate(atlasW, atlasH);
 
     FontObject obj;
     obj.ID = std::make_pair(f, a);
+    obj.atlas_width = atlasW;
+    obj.atlas_height = atlasH;
 
 	cache.insert({ _id, obj});
 
@@ -71,6 +73,12 @@ bool FontLibrary::hasGlyph(std::size_t id, unsigned int codepoint) {
 	return false;
 }
 
+std::array<signed long int, 2> FontLibrary::glyph_getDimension(std::size_t id, unsigned int codepoint) {
+    auto fontObjIt = checkID(id);
+    auto& glyphInfo = checkGlyph(id, codepoint);
+    return { glyphInfo.glyphWidth, glyphInfo.glyphHeight };
+}
+
 std::array<int, 2> FontLibrary::atlas_getGlyphPos(std::size_t id, unsigned int codepoint) {
     auto fontObjIt = checkID(id);
     auto f = extractFontID(fontObjIt);
@@ -79,6 +87,17 @@ std::array<int, 2> FontLibrary::atlas_getGlyphPos(std::size_t id, unsigned int c
     checkGlyph(id, codepoint);
     return atlas.getGlyphPos(a, codepoint);
 
+}
+
+const std::vector<std::uint32_t>& FontLibrary::atlas_getBuffer(std::size_t id) {
+	auto fontObjIt = checkID(id);
+	auto a = extractAtlasID(fontObjIt);
+	return atlas.getAtlas(a);
+}
+
+std::array<int, 2> FontLibrary::atlas_getDimension(std::size_t id) {
+	auto fontObjIt = checkID(id);
+    return { fontObjIt->second.atlas_width, fontObjIt->second.atlas_height };
 }
 
 const std::unordered_map<std::size_t, FontLibrary::FontObject>::iterator 

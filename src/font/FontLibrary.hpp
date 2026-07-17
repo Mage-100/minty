@@ -12,6 +12,7 @@ class FontLibrary {
 	FontAtlas atlas;
 
 	struct FontObject {
+		int atlas_width = 0, atlas_height = 0;
 		std::unordered_map<unsigned int, FontAtlas::GlyphInfo> glyph_info;
 		std::pair<int, int> ID;
 	};
@@ -28,7 +29,12 @@ public:
 	void addGlyph(std::size_t id, unsigned int codepoint);
 	bool hasGlyph(std::size_t id, unsigned int codepoint);
 
+	std::array<signed long int, 2> glyph_getDimension(std::size_t id, unsigned int codepoint);
+
 	std::array<int, 2> atlas_getGlyphPos(std::size_t id, unsigned int codepoint);
+	std::array<int, 2> atlas_getDimension(std::size_t id);
+
+	const std::vector<std::uint32_t>& atlas_getBuffer(std::size_t id);
 
 private:
 	const std::unordered_map<std::size_t, FontObject>::iterator checkID(std::size_t id);
