@@ -15,6 +15,7 @@
 
 #include <Font.hpp>
 #include <FontAtlas.hpp>
+#include <FontLibrary.hpp>
 
 using Path = std::filesystem::path;
 
@@ -68,20 +69,20 @@ int main() {
 	Path fontSource = std::filesystem::path(FONT_SOURCE);
 	Path fontPath = fontSource / "RobotoMono" / "RobotoMono-Regular.ttf";
 
-	Font font;
 	int font_size = 16;
-	int f1 = font.addFontFromPath(fontPath.string(), font_size);
+	FontLibrary font1;
+	auto id = font1.addFontFromPath(fontPath.string(), font_size); 
+	font1.addGlyph(id, 'A');
+	font1.addGlyph(id, 'B');
+	font1.addGlyph(id, 'C');
+	font1.addGlyph(id, 'D');
+	font1.addGlyph(id, 'E');
 
-	FontAtlas atlas;
-	int atlasW = font_size * 26;
-	int atlasH = atlasW;
-	int a1 = atlas.generate(atlasW, atlasH);
+	if (font1.hasGlyph(id, 'E')) {
+		auto [x, y] = font1.atlas_getGlyphPos(id, 'E');
+		std::cout << "X: " << x << " Y: " << y << std::endl;
+	}
 
-	addGlyphHelper(font, f1, atlas, a1, 'A');
-	addGlyphHelper(font, f1, atlas, a1, 'B');
-	addGlyphHelper(font, f1, atlas, a1, 'C');
-	addGlyphHelper(font, f1, atlas, a1, 'D');
-	addGlyphHelper(font, f1, atlas, a1, 'E');
 
 	int cols = 50;
 	int padding_x = 5;

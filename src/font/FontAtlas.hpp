@@ -28,6 +28,12 @@ public:
         unsigned char* bitmapBuffer;
     };
 private:
+    struct GlyphObject {
+        int posX;
+        int posY;
+        unsigned int codepoint;
+    };
+
     struct AtlasObject {
         int width;
         int height;
@@ -35,14 +41,14 @@ private:
         int maxGlyphHeight = 0;
         int penx = 0;
         int peny = 0;
-        std::vector<GlyphInfo> glyphs = {};
-        std::vector<std::uint32_t> atlas;
+        std::unordered_map<unsigned int, GlyphObject> glyph_store = {};
+        std::vector<std::uint32_t> atlas_buffer;
     };
 
     int cache_counter = 0;
     std::unordered_map<int, AtlasObject> cache;
 
-    void m_addGlyphToAtlas(AtlasObject& obj);
+    std::unordered_map<int, AtlasObject>::iterator checkAtlas(int atlasID);
 public:
     FontAtlas();
     ~FontAtlas();

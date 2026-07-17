@@ -15,7 +15,7 @@ int FontAtlas::generate(int w, int h) {
         .height = h,
         .stride = w,
         .maxGlyphHeight = 0,
-        .atlas = std::vector<std::uint32_t>(w * h, 0xFF003300)
+        .atlas_buffer = std::vector<std::uint32_t>(w * h, 0xFF003300)
     };
 
     cache.insert({cache_counter, obj});
@@ -23,40 +23,45 @@ int FontAtlas::generate(int w, int h) {
     return cache_counter++;
 }
 
-void FontAtlas::addGlyph(int atlasID, GlyphInfo info) {
+std::unordered_map<int, FontAtlas::AtlasObject>::iterator FontAtlas::checkAtlas(int atlasID) {
     auto it = cache.find(atlasID);
 
     if (it == cache.end())
-        throw "Atlas not created yet: " + std::to_string(atlasID);
+        throw std::runtime_error("Atlas not created yet: " + std::to_string(atlasID));
 
-    it->second.glyphs.push_back(info);
-    m_addGlyphToAtlas(it->second);
+    return it;
 }
 
-void FontAtlas::m_addGlyphToAtlas(AtlasObject& obj) {
-    GlyphInfo& glyphInfo = obj.glyphs.back();
+void FontAtlas::addGlyph(int atlasID, GlyphInfo glyphInfo) {
+    auto& atlasObj = checkAtlas(atlasID)->second;
+
+
     auto& bitmapBuffer = glyphInfo.bitmapBuffer;
 
     auto bitmapWidth = glyphInfo.bitmapWidth;
     auto bitmapHeight = glyphInfo.bitmapHeight;
     auto bitmapPitch = glyphInfo.bitmapPitch;
 
-    auto& atlasBuffer = obj.atlas;
+    auto& atlasBuffer = atlasObj.atlas_buffer;
 
-    auto& maxGlyphHeight = obj.maxGlyphHeight;
+    auto& maxGlyphHeight = atlasObj.maxGlyphHeight;
 	if (bitmapHeight > maxGlyphHeight)
 		maxGlyphHeight = bitmapHeight;
 
-    auto& penX = obj.penx;
-    auto& penY = obj.peny;
+    auto& penX = atlasObj.penx;
+    auto& penY = atlasObj.peny;
 
-	if (penX + glyphInfo.advanceX > obj.width) {
+	if (penX + glyphInfo.advanceX > atlasObj.width) {
 		penX = 0;
 		penY += maxGlyphHeight;
 	}
 
-    glyphInfo.atlasPosX = penX;
-    glyphInfo.atlasPosY = penY;
+    FontAtlas::GlyphObject glyph_obj = {
+        .posX = penX,
+        .posY = penY,
+        .codepoint = glyphInfo.codepoint
+    };
+    atlasObj.glyph_store.insert({ glyphInfo.codepoint, glyph_obj});
 
     for (int y = 0; y < bitmapHeight; y++) {
         for (int x = 0; x < bitmapWidth; x++) {
@@ -68,7 +73,7 @@ void FontAtlas::m_addGlyphToAtlas(AtlasObject& obj) {
 
             std::uint32_t atlasPixel = alpha | blue | green | red;
 
-			int index = (penX + x) + (penY + y) * obj.stride;
+			int index = (penX + x) + (penY + y) * atlasObj.stride;
             atlasBuffer[index] = atlasPixel;
         }
     }
@@ -82,35 +87,28 @@ const std::vector<std::uint32_t>& FontAtlas::getAtlas(int atlasID) {
     if (it == cache.end())
         throw "Atlas not created yet: " + std::to_string(atlasID);
 
-    if (it->second.glyphs.size() == 0)
+    if (it->second.glyph_store.size() == 0)
         throw "Glyphs not added yet: " + std::to_string(atlasID);
 
-    return it->second.atlas;
+    return it->second.atlas_buffer;
 }
 
 std::array<int, 2> FontAtlas::getGlyphPos(int atlasID, unsigned int codepoint) {
-	auto it = cache.find(atlasID);
-
-	if (it == cache.end())
-		throw std::runtime_error("Atlas not created yet: " + std::to_string(atlasID));
+    auto it = checkAtlas(atlasID);
 
 	auto& atlasObj = it->second;
 
-	if (atlasObj.glyphs.size() == 0)
+	if (atlasObj.glyph_store.empty())
 		throw "Glyphs not added yet: " + std::to_string(atlasID);
 
-	auto glyphIt = std::ranges::find_if(atlasObj.glyphs,
-		[&codepoint](const auto& glyphObj) {
-			return codepoint == glyphObj.codepoint;
-		}
-	);
+    auto glyphIt = atlasObj.glyph_store.find(codepoint);
 
-	if (glyphIt == atlasObj.glyphs.end()) {
+	if (glyphIt == atlasObj.glyph_store.end()) {
 		throw std::runtime_error("Glyph not found: Codepoint: " + std::to_string(codepoint));
 	}
 
-	auto& glyph = *glyphIt;
+    auto& glyph = glyphIt->second;
 
-    return { glyph.atlasPosX, glyph.atlasPosY };
+    return { glyph.posX, glyph.posY };
 
 }
