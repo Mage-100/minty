@@ -71,6 +71,30 @@ Font::GlyphBitmap Font::getGlyphBitmap(int fontID, unsigned int codepoint) {
     return glyphObj.bitmap;
 }
 
+FT_Short Font::getAscender(int fontID) {
+    auto fontObjIt = checkFontID(fontID);
+    auto& fontObj = fontObjIt->second;
+    return fontObj.face->ascender;
+}
+
+FT_Short Font::getDescender(int fontID) {
+    auto fontObjIt = checkFontID(fontID);
+    auto& fontObj = fontObjIt->second;
+    return fontObj.face->descender;
+}
+
+FT_UShort Font::getUnitsPerEm(int fontID) {
+    auto fontObjIt = checkFontID(fontID);
+    auto& fontObj = fontObjIt->second;
+    return fontObj.face->units_per_EM;
+}
+
+FT_Pos Font::getMaxAdvanceX(int fontID) {
+    auto fontObjIt = checkFontID(fontID);
+    auto& fontObj = fontObjIt->second;
+    return fontObj.face->size->metrics.max_advance;
+}
+
 signed long int Font::getGlyphAdvanceX(int fontID, unsigned int codepoint) {
     auto& glyphObj = loadGlyph(fontID, codepoint);
     return glyphObj.advanceX;

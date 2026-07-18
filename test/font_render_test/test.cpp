@@ -73,7 +73,7 @@ int main() {
 	Path fontSource = std::filesystem::path(FONT_SOURCE);
 	Path fontPath = fontSource / "RobotoMono" / "RobotoMono-Regular.ttf";
 
-	int font_size = 30;
+	float font_size = 60;
 	FontLibrary font_lib;
 	auto id = font_lib.addFontFromPath(fontPath.string(), font_size); 
 	font_lib.addGlyph(id, 'A');
@@ -81,29 +81,57 @@ int main() {
 	font_lib.addGlyph(id, 'C');
 	font_lib.addGlyph(id, 'D');
 	font_lib.addGlyph(id, 'E');
+	font_lib.addGlyph(id, 'i');
 
-	if (font_lib.hasGlyph(id, 'A')) {
-		auto [x, y] = font_lib.atlas_getGlyphPos(id, 'A');
-		std::cout << "X: " << x << " Y: " << y << std::endl;
-	}
-
-
-	int cols = 15;
-	int padding_x = 5;
-	int gap_x = 2;
-	int WINDOW_WIDTH = (font_size * cols) + (2*padding_x) + (gap_x * (cols-1));
-
-	int row_height = font_size * 1.5;
-	int rows = 10;
-	int padding_y = 5;
-	int gap_y = 2;
-	int WINDOW_HEIGHT = (row_height * rows) + (2 * padding_y) + (gap_y * (rows - 1)); 
+	unsigned int codepoint = 0x03B2;
+	std::cout << "Codepoint: '" << static_cast<char>(codepoint) << "'" << std::endl;
+	font_lib.addGlyph(id, codepoint);
 	
+	auto ascender_px = font_lib.getAscenderPX(id);
+	auto descender_px = font_lib.getDescenderPX(id);
+	std::cout << "Ascender(px): " << ascender_px << std::endl;
+	std::cout << "Descender(px): " << descender_px << std::endl;
+
+	auto max_advance_x = font_lib.getMaxAdvanceX(id);
+	std::cout << "Max Advance X: " << max_advance_x << std::endl;
+
+	int pen_x, pen_y;
+	if (font_lib.hasGlyph(id, codepoint)) {
+		auto [x, y] = font_lib.atlas_getGlyphPos(id, codepoint);
+		std::cout << "X: " << x << " Y: " << y << std::endl;
+		pen_x = x;
+		pen_y = y;
+	}
+	auto [glyphW, glyphH] = font_lib.glyph_getDimension(id, codepoint);
+	auto [bitmapW, bitmapH] = font_lib.glyph_getBitmapDimension(id, codepoint);
+	auto [bearingX, bearingY] = font_lib.glyph_getBearing(id, codepoint);
+
+	std::cout << "Glyph Width: " << glyphW << std::endl;
+	std::cout << "Glyph Height: " << glyphH << std::endl;
+	std::cout << "Bitmap Width: " << bitmapW << std::endl;
+	std::cout << "Bitmap Height: " << bitmapH << std::endl;
+	std::cout << "Bearing X: " << bearingX << std::endl;
+	std::cout << "Bearing Y: " << bearingY << std::endl;
+	std::cout << "Top Offset: " << ascender_px - bearingY << std::endl;
+
+	float cell_width = max_advance_x;
+	float cell_height = ascender_px - descender_px;
+
+	std::cout << "Cell Width: " << cell_width << std::endl;
+	std::cout << "Cell Height: " << cell_height << std::endl;
+
+	float cols = 20;
+	float padding_x = 5;
+	float gap_x = 2;
+	float WINDOW_WIDTH = (cell_width * cols) + (2*padding_x) + (gap_x * (cols-1));
+
+	float rows = 8;
+	float padding_y = 5;
+	float gap_y = 2;
+	float WINDOW_HEIGHT = (cell_height * rows) + (2 * padding_y) + (gap_y * (rows - 1)); 
+
 	int fb_width = 0;
 	int fb_height = 0;
-
-	int cell_width = font_size;
-	int cell_height = row_height;
 
 	Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "Font Render Test");
 
@@ -150,9 +178,20 @@ int main() {
 	int a = stbi_write_png("font_render_test.png", atlasW, atlasH, 4, atlasBuffer, atlasW * 4);
 	Texture2D glyph_atlas(atlasW, atlasH, const_cast<void*>(atlasBuffer));
 
-	auto [glyphW, glyphH] = font_lib.glyph_getDimension(id, 'A');
+	float top_offset = (ascender_px - bearingY) / (float)(cell_height);
+	float left_offset = (float)bearingX / cell_width;
+
+	float bottom_offset = top_offset + (glyphH / (float)cell_height);
+	float right_offset = left_offset + (glyphW / (float)cell_width);
+
+	std::cout << "Top Offset: " << top_offset << std::endl;
+	std::cout << "Left Offset: " << left_offset << std::endl;
+	std::cout << "Bottom Offset: " << bottom_offset << std::endl;
+	std::cout << "Right Offset: " << right_offset << std::endl;
 
 	glad_glVertexAttribDivisor(0, 1);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	while (!window.shouldWindowClose()) {
 		glfwWaitEvents();
@@ -167,13 +206,15 @@ int main() {
 
 		va.Bind();
 		s.use();
+		s.setFloat("pen_x", pen_x);
+		s.setFloat("pen_y", pen_y);
 		s.setFloat("padding_x", padding_x);
 		s.setFloat("padding_y", padding_y);
-		s.setVec2("cellDimension", glm::vec2(cell_width, cell_height));
 		s.setMat4("projection", projection);
-		s.setVec2("atlas_size", glm::vec2(atlasW, atlasH));
-		s.setVec2("glyph_size", glm::vec2(glyphW, glyphH));
-		//glad_glDrawArrays(GL_TRIANGLES, 0, 6);
+		s.setVec2("glyph_size", glm::vec2(bitmapW, bitmapH));
+		s.setVec2("cell_size", glm::vec2(cell_width, cell_height));
+		s.setFloat("ascender", ascender_px);
+		s.setVec2("bearing", glm::vec2(bearingX, bearingY));
 		glad_glDrawArraysInstanced(GL_TRIANGLES, 0, 6, cols * rows);
 
 		window.flush();

@@ -23,10 +23,51 @@ std::size_t FontLibrary::addFontFromPath(const std::string& path, std::size_t fo
     obj.ID = std::make_pair(f, a);
     obj.atlas_width = atlasW;
     obj.atlas_height = atlasH;
+    obj.font_size = font_size;
+    obj.ascender = font.getAscender(f);
+    obj.descender = font.getDescender(f);
+    obj.units_per_em = font.getUnitsPerEm(f);
+    obj.max_advance_x = font.getMaxAdvanceX(f);
 
 	cache.insert({ _id, obj});
 
 	return _id++;
+}
+
+signed short int FontLibrary::getAscender(std::size_t id) {
+    auto fontObjIt = checkID(id);
+    auto& fontObj = fontObjIt->second;
+    return fontObj.ascender;
+}
+
+float FontLibrary::getAscenderPX(std::size_t id) {
+    auto fontObjIt = checkID(id);
+    auto& fontObj = fontObjIt->second;
+    return static_cast<float>(fontObj.ascender) / fontObj.units_per_em * fontObj.font_size;
+}
+
+signed short int FontLibrary::getDescender(std::size_t id) {
+    auto fontObjIt = checkID(id);
+    auto& fontObj = fontObjIt->second;
+    return fontObj.descender;
+}
+
+float FontLibrary::getDescenderPX(std::size_t id) {
+    auto fontObjIt = checkID(id);
+    auto& fontObj = fontObjIt->second;
+    return static_cast<float>(fontObj.descender) / fontObj.units_per_em * fontObj.font_size;
+}
+
+unsigned short int FontLibrary::getUnitsPerEm(std::size_t id) {
+    auto fontObjIt = checkID(id);
+    auto& fontObj = fontObjIt->second;
+    return  fontObj.units_per_em;
+}
+
+signed long int FontLibrary::getMaxAdvanceX(std::size_t id) {
+    auto fontObjIt = checkID(id);
+    auto& fontObj = fontObjIt->second;
+    return  fontObj.max_advance_x >> 6;
 }
 
 void FontLibrary::addGlyph(std::size_t id, unsigned int codepoint) {
@@ -77,6 +118,20 @@ std::array<signed long int, 2> FontLibrary::glyph_getDimension(std::size_t id, u
     auto fontObjIt = checkID(id);
     auto& glyphInfo = checkGlyph(id, codepoint);
     return { glyphInfo.glyphWidth, glyphInfo.glyphHeight };
+}
+
+std::array<unsigned int, 2> FontLibrary::glyph_getBitmapDimension(std::size_t id, unsigned int codepoint) {
+    auto fontObjIt = checkID(id);
+    auto& glyphInfo = checkGlyph(id, codepoint);
+
+    return { glyphInfo.bitmapWidth, glyphInfo.bitmapHeight };
+}
+
+std::array<signed long int, 2> FontLibrary::glyph_getBearing(std::size_t id, unsigned int codepoint) {
+    auto fontObjIt = checkID(id);
+    auto& glyphInfo = checkGlyph(id, codepoint);
+
+    return { glyphInfo.bearingX, glyphInfo.bearingY };
 }
 
 std::array<int, 2> FontLibrary::atlas_getGlyphPos(std::size_t id, unsigned int codepoint) {

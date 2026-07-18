@@ -51,6 +51,10 @@ public:
     GlyphSize getGlyphSize(int fontID, unsigned int codepoint);
     GlyphBearing getGlyphBearing(int fontID, unsigned int codepoint);
     GlyphBitmap getGlyphBitmap(int fontID, unsigned int codepoint);
+    FT_Short getAscender(int fontID);
+    FT_Short getDescender(int fontID);
+    FT_UShort getUnitsPerEm(int fontID);
+    FT_Pos getMaxAdvanceX(int fontID);
 
     signed long int getGlyphAdvanceX(int fontID, unsigned int codepoint);
 private:

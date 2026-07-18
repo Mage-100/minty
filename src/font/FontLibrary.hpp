@@ -12,7 +12,10 @@ class FontLibrary {
 	FontAtlas atlas;
 
 	struct FontObject {
-		int atlas_width = 0, atlas_height = 0;
+		int atlas_width = 0, atlas_height = 0, font_size;
+		signed short int ascender, descender;
+		unsigned short int units_per_em;
+		signed long int max_advance_x;
 		std::unordered_map<unsigned int, FontAtlas::GlyphInfo> glyph_info;
 		std::pair<int, int> ID;
 	};
@@ -26,10 +29,22 @@ public:
 
 	std::size_t addFontFromPath(const std::string& path, std::size_t font_size);
 
+	signed short int getAscender(std::size_t id);
+	float getAscenderPX(std::size_t id);
+
+	signed short int getDescender(std::size_t id);
+	float getDescenderPX(std::size_t id);
+
+	unsigned short int getUnitsPerEm(std::size_t id);
+
+	signed long int getMaxAdvanceX(std::size_t id);
+
 	void addGlyph(std::size_t id, unsigned int codepoint);
 	bool hasGlyph(std::size_t id, unsigned int codepoint);
 
 	std::array<signed long int, 2> glyph_getDimension(std::size_t id, unsigned int codepoint);
+	std::array<unsigned int, 2> glyph_getBitmapDimension(std::size_t id, unsigned int codepoint);
+	std::array<signed long int, 2> glyph_getBearing(std::size_t id, unsigned int codepoint);
 
 	std::array<int, 2> atlas_getGlyphPos(std::size_t id, unsigned int codepoint);
 	std::array<int, 2> atlas_getDimension(std::size_t id);
