@@ -6,19 +6,27 @@
         "patch": 0
     },
     "configurePresets": [
-        {
-            "name": "default-windows",
-            "displayName": "Default build for Windows",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/default",
-            "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "CMAKE_C_COMPILER": "clang-cl",
-                "CMAKE_CXX_COMPILER": "clang-cl",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
+      {
+        "name": "default-windows",
+        "displayName": "Default build for Windows",
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/build/default",
+        "cacheVariables": {
+          "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+          "CMAKE_C_COMPILER": "clang-cl",
+          "CMAKE_CXX_COMPILER": "clang-cl",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+          "CMAKE_BUILD_TYPE": "Debug"
         }
+      },
+      {
+        "name": "default-msvc",
+        "inherits": "default-windows",
+        "cacheVariables": {
+          "CMAKE_C_COMPILER": "cl.exe",
+          "CMAKE_CXX_COMPILER":  "cl.exe"
+        }
+      }
     ],
     "buildPresets": [
         {

@@ -33,41 +33,27 @@ struct Pos {
 	float z;
 };
 
-std::array<Pos, 6> CreateQuad(float x, float y, float w, float h) {
-	return { {
-		    x,     y, 0.0f,
-		x + w,     y, 0.0f,
-		x + w, y + h, 0.0f,
+struct Pen {
+	float x;
+	float y;
+};
 
-		x + w, y + h, 0.0f,
-		    x, y + h, 0.0f,
-		    x,     y, 0.0f,
-	} };
-}
+struct Size {
+	float w;
+	float h;
+};
 
-static void addGlyphHelper(Font& font, int fontID, FontAtlas& atlas, int atlasID, unsigned int codepoint) {
-    auto size = font.getGlyphSize(fontID, codepoint);
-    auto bearing = font.getGlyphBearing(fontID, codepoint);
-    auto bitmap = font.getGlyphBitmap(fontID, codepoint);
-    auto bitmapBuffer = font.getGlyphBuffer(fontID, codepoint);
+struct Bearing {
+	float x;
+	float y;
+};
 
-    FontAtlas::GlyphInfo info = {
-		.codepoint = codepoint,
-        .glyphWidth = size.width,
-        .glyphHeight = size.height,
-        .advanceX = font.getGlyphAdvanceX(fontID, codepoint),
-        .bearingX = bearing.x,
-        .bearingY = bearing.y,
-        .ascender = 0,
-        .descender = 0,
-        .bitmapHeight = bitmap.height,
-        .bitmapWidth = bitmap.width,
-        .bitmapPitch = bitmap.pitch,
-        .bitmapBuffer = bitmapBuffer
-    };
-
-    atlas.addGlyph(atlasID, info);
-}
+struct Vertex {
+	Pos pos;
+	Pen pen;
+	Size size;
+	Bearing bearing;
+};
 
 int main() {
 	Path fontSource = std::filesystem::path(FONT_SOURCE);
@@ -82,6 +68,8 @@ int main() {
 	font_lib.addGlyph(id, 'D');
 	font_lib.addGlyph(id, 'E');
 	font_lib.addGlyph(id, 'i');
+	font_lib.addGlyph(id, 'g');
+	font_lib.addGlyph(id, 'q');
 
 	unsigned int codepoint = 0x03B2;
 	std::cout << "Codepoint: '" << static_cast<char>(codepoint) << "'" << std::endl;
@@ -95,7 +83,7 @@ int main() {
 	auto max_advance_x = font_lib.getMaxAdvanceX(id);
 	std::cout << "Max Advance X: " << max_advance_x << std::endl;
 
-	int pen_x, pen_y;
+	int pen_x = -1, pen_y = -1;
 	if (font_lib.hasGlyph(id, codepoint)) {
 		auto [x, y] = font_lib.atlas_getGlyphPos(id, codepoint);
 		std::cout << "X: " << x << " Y: " << y << std::endl;
@@ -151,27 +139,58 @@ int main() {
 	Shader s(shaderPath.string());
 
 
-	std::vector<Pos> vertices;
+	std::vector<Vertex> vertices;
 
 	for (int y = 0; y < rows; y++) {
 		for (int x = 0; x < cols; x++) {
+			unsigned int code = 'q';
+			auto [gW, gH] = font_lib.glyph_getDimension(id, code);
+			auto [pW, pH] = font_lib.atlas_getGlyphPos(id, code);
+			auto [bX, bY] = font_lib.glyph_getBearing(id, code);
+
+			Vertex v;
 			Pos p = {
 				static_cast<float>(x * (cell_width + gap_x)),
 				static_cast<float>(y * (cell_height + gap_y)),
 				0.0f
 			};
 
-			vertices.push_back(p);
+			Pen pen = {
+				pW, pH
+			};
+
+			Size size{
+				gW, gH
+			};
+
+			Bearing bearing{
+				bX, bY
+			};
+
+			v.pos = p;
+			v.pen = pen;
+			v.size = size;
+			v.bearing = bearing;
+
+			vertices.push_back(v);
 		}
 	}
 
-	VertexBuffer vb(vertices.data(), vertices.size() * sizeof(Pos));
+	VertexBuffer vb(vertices.data(), vertices.size() * sizeof(Vertex));
 	
 	VertexBufferLayout layout;
 	layout.Push<float>(3);
+	layout.Push<float>(2);
+	layout.Push<float>(2);
+	layout.Push<float>(2);
 
 	VertexArray va;
 	va.AddBuffer(vb, layout);
+
+	glad_glVertexAttribDivisor(0, 1);
+	glad_glVertexAttribDivisor(1, 1);
+	glad_glVertexAttribDivisor(2, 1);
+	glad_glVertexAttribDivisor(3, 1);
 
 	auto [atlasW, atlasH] = font_lib.atlas_getDimension(id);
 	const void* atlasBuffer = font_lib.atlas_getBuffer(id).data();
@@ -189,7 +208,6 @@ int main() {
 	std::cout << "Bottom Offset: " << bottom_offset << std::endl;
 	std::cout << "Right Offset: " << right_offset << std::endl;
 
-	glad_glVertexAttribDivisor(0, 1);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -206,15 +224,11 @@ int main() {
 
 		va.Bind();
 		s.use();
-		s.setFloat("pen_x", pen_x);
-		s.setFloat("pen_y", pen_y);
 		s.setFloat("padding_x", padding_x);
 		s.setFloat("padding_y", padding_y);
 		s.setMat4("projection", projection);
-		s.setVec2("glyph_size", glm::vec2(bitmapW, bitmapH));
 		s.setVec2("cell_size", glm::vec2(cell_width, cell_height));
 		s.setFloat("ascender", ascender_px);
-		s.setVec2("bearing", glm::vec2(bearingX, bearingY));
 		glad_glDrawArraysInstanced(GL_TRIANGLES, 0, 6, cols * rows);
 
 		window.flush();

@@ -13,16 +13,23 @@ class FontLibrary {
 
 	struct FontObject {
 		int atlas_width = 0, atlas_height = 0, font_size;
-		signed short int ascender, descender;
-		unsigned short int units_per_em;
-		signed long int max_advance_x;
+		signed short int ascender = 0, descender = 0;
+		unsigned short int units_per_em = 0;
+		signed long int max_advance_x = 0;
 		std::unordered_map<unsigned int, FontAtlas::GlyphInfo> glyph_info;
 		std::pair<int, int> ID;
+
+		// REMARK
+		// Only works cause the underlying FontAtlas ensures the
+		// the position of the glyph doesn't change within the atlas. 
+		// Future api changes may break this method
+		std::unordered_map<unsigned int, std::array<int, 2>> glyph_pos_cache;
 	};
 
 	std::size_t _id = 0;
 	// std::pair<FontID, AtlasID>
 	std::unordered_map<std::size_t, FontObject> cache;
+	
 public:
 	FontLibrary();
 	~FontLibrary();

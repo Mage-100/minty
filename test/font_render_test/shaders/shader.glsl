@@ -1,6 +1,9 @@
 #shader(vertex)
 #version 330 core
 layout (location = 0) in vec3 offset;
+layout (location = 1) in vec2 aPen;
+layout (location = 2) in vec2 aGlyphSize;
+layout (location = 3) in vec2 aBearing;
 
 vec3 vertex[6] = vec3[6](
 	vec3( 0.0,  0.0, 0.0), // Top-Left
@@ -24,6 +27,9 @@ vec2 texCoords[6] = vec2[6](
 
 out vec2 TexCoord;
 out vec2 uv;
+flat out vec2 pen;
+flat out vec2 glyph_size;
+flat out vec2 bearing;
 flat out int test;
 
 uniform float padding_x;
@@ -39,6 +45,9 @@ void main() {
 	gl_Position = projection * vec4(quad, 1.0);
 	TexCoord = texCoords[gl_VertexID];
 	uv = vertex[gl_VertexID].xy;
+	pen = aPen;
+	glyph_size = aGlyphSize;
+	bearing = aBearing;
 
 	if (gl_InstanceID == 10) test = 1;
 	else test = 0;
@@ -50,14 +59,13 @@ void main() {
 out vec4 FragColor;
 in vec2 TexCoord;
 in vec2 uv;
+flat in vec2 pen;
+flat in vec2 glyph_size;
+flat in vec2 bearing;
 flat in int test;
 
 uniform sampler2D texture;
-uniform vec2 glyph_size;
-uniform float pen_x;
-uniform float pen_y;
 uniform vec2 cell_size;
-uniform vec2 bearing;
 uniform float ascender;
 
 void main() {
@@ -67,7 +75,8 @@ void main() {
 	float left_offset = float(bearing.x) / cell_size.x;
 	float right_offset = left_offset + float(glyph_size.x / cell_size.x);
 	
-	vec2 pen = vec2(pen_x, pen_y);
+	vec3 text_color = vec3(0.2, 1.0, 0.2);
+	vec3 cell_color = vec3(0.15);
 
 	if (test == 1) {
 		bool condition_left_right = uv.x > left_offset && uv.x < right_offset;
@@ -75,18 +84,20 @@ void main() {
 		if (condition_left_right && condition_top_bottom) {
 			vec2 local = (uv - vec2(left_offset, top_offset)) * cell_size;
 			vec4 texel = texelFetch(texture, ivec2(pen) + ivec2(local), 0);
-			
-			if (texel.xyz == vec3(0.0)) {
-				texel = vec4(vec3(0.2), 1.0);
-			}
+
+				float r = mix(cell_color.r, text_color.r, texel.x);
+				float g = mix(cell_color.g, text_color.g, texel.x);
+				float b = mix(cell_color.b, text_color.b, texel.x);
+				texel.xyz = vec3(r, g, b);
 
 			FragColor = texel;
-		} else {
-			// FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-			FragColor = vec4(vec3(0.2), 1.0);
 		}
-	} else {
-		FragColor = vec4(vec3(0.2), 1.0);
+		else {
+			FragColor = vec4(cell_color, 1.0);
+		}
+	}
+	else {
+		FragColor = vec4(cell_color, 1.0);
 	}
 
 }

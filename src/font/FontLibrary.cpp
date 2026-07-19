@@ -77,6 +77,8 @@ void FontLibrary::addGlyph(std::size_t id, unsigned int codepoint) {
     
     auto& fontObj = fontObjIt->second;
 
+    if (fontObj.glyph_info.find(codepoint) != fontObj.glyph_info.end()) return;
+
     auto size = font.getGlyphSize(fontID, codepoint);
     auto bearing = font.getGlyphBearing(fontID, codepoint);
     auto bitmap = font.getGlyphBitmap(fontID, codepoint);
@@ -140,7 +142,19 @@ std::array<int, 2> FontLibrary::atlas_getGlyphPos(std::size_t id, unsigned int c
     auto a = extractAtlasID(fontObjIt);
 
     checkGlyph(id, codepoint);
-    return atlas.getGlyphPos(a, codepoint);
+    
+    auto& fontObj = fontObjIt->second;
+    auto glyphPosIt = fontObj.glyph_pos_cache.find(codepoint);
+
+    if (glyphPosIt != fontObj.glyph_pos_cache.end()) {
+        return glyphPosIt->second;
+    }
+    else {
+        auto [pX, pY] = atlas.getGlyphPos(a, codepoint);
+        fontObj.glyph_pos_cache.insert({ codepoint, std::array<int,2>{pX, pY} });
+        return { pX, pY };
+    }
+
 
 }
 
