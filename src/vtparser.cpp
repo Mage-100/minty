@@ -118,6 +118,38 @@ void VTParser::dispatchCSI(uint8_t final, const std::string& parambuf) {
         return;
     }
 
+    if (final == 'm') {
+        std::vector<int> result;
+        std::string current;
+
+        for (char c : parambuf) {
+            if (c == ';') {
+                result.push_back(current.empty() ? 0 : std::stoi(current));
+                current.clear();
+            } else if (c >= '0' && c <= '9') {
+                current += c;
+            }
+        }
+        result.push_back(current.empty() ? 0 : std::stoi(current));
+
+        if (result.empty() || (result.size() == 1 && (result[0] == 0 || result[0] == -1))) {
+            cb.onResetAllModes();
+            return;
+        }
+
+        for (int p : result) {
+            if (p == 0) {
+                cb.onResetAllModes();
+            } else if (30 <= p && p <= 39) {
+                cb.onSetForegroundColor(p);
+            } else if (40 <= p && p <= 49) {
+                cb.onSetBackgroundColor(p);
+            }
+        }
+
+        return;
+    }
+
     if (final == 'H' || final == 'f') {
         std::vector<int> result;
         std::string current;

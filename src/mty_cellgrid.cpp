@@ -5,14 +5,17 @@ CellGrid::CellGrid(int cols, int rows) : m_cols(cols), m_rows(rows) {
     m_buffer = std::vector<cell_t>(m_cols * m_rows);
     m_staging.reserve(m_cols * m_rows);
 
+    default_cell_style.fg_color = 0xFFFFFFFF;
+    default_cell_style.bg_color = 0x00000000;
+
     for (int y = 0; y < m_rows; y++) {
         for (int x = 0; x < m_cols; x++) {
             int index = x + y * m_cols;
 
             int ch = 32 + (index % (126 - 32));
             m_buffer[index].glyph_id = ch - 32;
-            m_buffer[index].bg_color = 0x00000000;
-            m_buffer[index].fg_color = 0xFFFFFFFF;
+            m_buffer[index].bg_color = getBGColor();
+            m_buffer[index].fg_color = getFGColor();
             m_buffer[index].flags = 0;
         }
     }
@@ -79,8 +82,8 @@ void CellGrid::printChar(int col, int row, char ch) {
     int index = col + physical_row * m_cols;
 
     m_buffer[index].glyph_id = ch - 32;
-    m_buffer[index].bg_color = 0x00000000;
-    m_buffer[index].fg_color = 0xFFFFFFFF;
+    m_buffer[index].bg_color = getBGColor();
+    m_buffer[index].fg_color = getFGColor();
     m_buffer[index].flags = 0;
 }
 
@@ -105,6 +108,75 @@ void CellGrid::eraseLine(int col, int row, int param) {
         for (int x = 0; x < m_cols; x++) {
             clearCell(x, row);
         }
+    }
+}
+
+void CellGrid::resetAllModes() {
+    default_cell_style.fg_color = 0xFFFFFFFF;
+    default_cell_style.bg_color = 0x00000000;
+}
+
+void CellGrid::setForegroundColor(int color) {
+    switch(color) {
+        case 30: // Black
+            default_cell_style.fg_color = 0xFF000000;
+            break;
+        case 31: // Red
+            default_cell_style.fg_color = 0xFF0000FF;
+            break;
+        case 32: // Green
+            default_cell_style.fg_color = 0xFF00FF00;
+            break;
+        case 33: // Yellow
+            default_cell_style.fg_color = 0xFF00FFFF;
+            break;
+        case 34: // Blue
+            default_cell_style.fg_color = 0xFFFF0000;
+            break;
+        case 35: // Magenta
+            default_cell_style.fg_color = 0xFFFF00FF;
+            break;
+        case 36: // Cyan
+            default_cell_style.fg_color = 0xFFFFFF00;
+            break;
+        case 37: // White
+            default_cell_style.fg_color = 0xFFFFFFFF;
+            break;
+        case 39: // Default
+            default_cell_style.fg_color = 0xFFFFFFFF;
+            break;
+    }
+}
+
+void CellGrid::setBackgroundColor(int color) {
+    switch(color) {
+        case 40: // Black
+            default_cell_style.bg_color = 0xFF000000;
+            break;
+        case 41: // Red
+            default_cell_style.bg_color = 0xFF0000FF;
+            break;
+        case 42: // Green
+            default_cell_style.bg_color = 0xFF00FF00;
+            break;
+        case 43: // Yellow
+            default_cell_style.bg_color = 0xFF00FFFF;
+            break;
+        case 44: // Blue
+            default_cell_style.bg_color = 0xFFFF0000;
+            break;
+        case 45: // Magenta
+            default_cell_style.bg_color = 0xFFFF00FF;
+            break;
+        case 46: // Cyan
+            default_cell_style.bg_color = 0xFFFFFF00;
+            break;
+        case 47: // White
+            default_cell_style.bg_color = 0xFFFFFFFF;
+            break;
+        case 49: // Default
+            default_cell_style.bg_color = 0x00000000;
+            break;
     }
 }
 
