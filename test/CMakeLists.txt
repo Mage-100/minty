@@ -1,6 +1,7 @@
+include(GoogleTest)
+
 add_executable(example_test example_test.cpp)
 target_link_libraries(example_test GTest::gtest_main)
-include(GoogleTest)
 gtest_discover_tests(example_test)
 
 set(COLOR_EMOJI_FONT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/font_engine_tests/NotoColorEmoji.ttf")
@@ -25,3 +26,14 @@ gtest_discover_tests(font_engine_test)
 
 add_subdirectory(font_tests)
 add_subdirectory(font_render_test)
+
+add_executable(utf8parser_test "utf8parser_test/test.cpp")
+target_include_directories(utf8parser_test PRIVATE
+    "${CMAKE_SOURCE_DIR}/src"
+)
+target_sources(utf8parser_test PRIVATE
+    "${CMAKE_SOURCE_DIR}/src/utf8parser.cpp"
+)
+
+target_link_libraries(utf8parser_test GTest::gtest_main)
+gtest_discover_tests(utf8parser_test)

@@ -156,15 +156,15 @@ int main() {
 			};
 
 			Pen pen = {
-				pW, pH
+				(float)pW, (float)pH
 			};
 
 			Size size{
-				gW, gH
+				(float)gW, (float)gH
 			};
 
 			Bearing bearing{
-				bX, bY
+				(float)bX, (float)bY
 			};
 
 			v.pos = p;
