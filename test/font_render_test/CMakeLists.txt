@@ -5,6 +5,7 @@ add_executable(font_render_test test.cpp)
 target_link_libraries(font_render_test PRIVATE 
 	core
     Font
+    glm::glm
 )
 
 target_compile_definitions(font_render_test PRIVATE
