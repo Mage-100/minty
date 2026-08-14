@@ -8,7 +8,7 @@ PromptRenderer::PromptRenderer(MintyState* s) : state(s) {
     cell_width = state->getCellWidth();
     cell_height = state->getCellHeight();
 
-    shader = std::make_unique<Shader>("D:/Azwad/home/programming/minty/shaders/prompt/prompt.vert", "D:/Azwad/home/programming/minty/shaders/prompt/prompt.frag");
+    shader = std::make_unique<Shader>("./shaders/prompt/prompt.vert", "./shaders/prompt/prompt.frag");
     float quad_vertices[] = {
         // x,    y
         0.0f, 0.0f, // Top-left

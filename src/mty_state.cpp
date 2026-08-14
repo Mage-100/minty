@@ -35,7 +35,7 @@ void MintyState::setFramebufferSize(int w, int h) {
     framebuffer_w = w;
     framebuffer_h = h;
     cols = w / font->get_advanceX();
-    rows = h / font->get_line_height();
+    rows = (h - font->get_line_height()) / font->get_line_height();
 }
 
 int MintyState::getWindowWidth() {

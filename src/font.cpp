@@ -50,7 +50,7 @@ void Font::init_fonts() {
     int glyph_metadata_index = 0;
 
     for (int c = 32; c <= 127; c++) {
-        error = FT_Load_Char(face, c, FT_LOAD_RENDER);
+        error = FT_Load_Char(face, c, FT_LOAD_RENDER | FT_LOAD_NO_HINTING | FT_LOAD_NO_AUTOHINT);
         if(error) {
             std::cerr << "Failed to load char: " << c << std::endl;
             continue;

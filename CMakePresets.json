@@ -6,6 +6,7 @@
         "patch": 0
     },
     "configurePresets": [
+<<<<<<< HEAD
       {
         "name": "default-windows",
         "displayName": "Default build for Windows",
@@ -17,8 +18,19 @@
           "CMAKE_CXX_COMPILER": "clang-cl",
           "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
           "CMAKE_BUILD_TYPE": "Debug"
-        }
       },
+        {
+            "name": "default-linux",
+            "displayName": "Default build for linux",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/default",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
       {
         "name": "default-msvc",
         "inherits": "default-windows",
@@ -32,6 +44,10 @@
         {
             "name": "default-windows",
             "configurePreset": "default-windows"
+        },
+        {
+            "name": "default-linux",
+            "configurePreset": "default-linux"
         }
     ]
 }

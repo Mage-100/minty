@@ -14,7 +14,7 @@
 #include <memory>
 
 MintyRuntime::MintyRuntime(ThreadSafeQueue<std::vector<char>>* q, MintyState* s, VTParser* v) : queue(q), state(s), vtparser(v) {
-    font = std::make_unique<Font>("C:\\windows\\FONTS\\Consola.ttf", 25);
+    font = std::make_unique<Font>("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 25);
     font->init_fonts();
     state->setFont(font.get());
     window = std::make_unique<OpenGLWindow>(state);

@@ -1,5 +1,6 @@
 #include "mty_cellgrid.hpp"
 #include <algorithm>
+#include <cstring>
 
 CellGrid::CellGrid(int cols, int rows) : m_cols(cols), m_rows(rows) {
     m_buffer = std::vector<cell_t>(m_cols * m_rows);
