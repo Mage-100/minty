@@ -1,8 +1,9 @@
 #include "pch.h"
+#include <filesystem>
 
-#include <shader.hpp>
 #include "mty_renderer.hpp"
 #include "mty_state.hpp"
+#include <shader.hpp>
 
 using namespace MintyRenderer;
 
@@ -26,7 +27,12 @@ void OpenGLCellRenderer::updateGridTexture() {
 OpenGLCellRenderer::OpenGLCellRenderer(MintyState* s, std::unique_ptr<Font> &f)
     : state(s), font(f), cols(s->getCols()), rows(s->getRows()) {
 
-    cellProgram = std::make_unique<Shader>("./shaders/cell/cell.vert", "./shaders/cell/cell.frag");
+
+    auto shader_path = std::filesystem::path(SHADERS_DIR);
+    auto cell_vert = shader_path / "cell/cell.vert";
+    auto cell_frag = shader_path / "cell/cell.frag";
+
+    cellProgram = std::make_unique<Shader>(cell_vert, cell_frag);
 
     float quad_vertices[] = {
         // x,    y

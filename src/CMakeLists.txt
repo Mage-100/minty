@@ -1,9 +1,6 @@
 add_subdirectory(font)
 
 add_executable(minty main.cpp)
-target_include_directories(minty PRIVATE
-    "${CMAKE_SOURCE_DIR}/include"
-)
 
 set(SOURCES
     "font.cpp"
@@ -30,6 +27,14 @@ endif()
 
 target_sources(minty PUBLIC
     ${SOURCES}
+)
+
+target_include_directories(minty PRIVATE
+    "${CMAKE_SOURCE_DIR}/include"
+)
+
+target_compile_definitions(minty PRIVATE
+    SHADERS_DIR="${SHADERS_DIR}"
 )
 
 target_precompile_headers(minty PRIVATE "pch.h")
